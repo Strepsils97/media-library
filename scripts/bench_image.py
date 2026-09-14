@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 IMAGES = ROOT / "samples" / "images"
 QUERIES = ROOT / "samples" / "queries.txt"
+QUERIES_EN = ROOT / "samples" / "queries_en.txt"
 OUT = ROOT / "samples" / "bench_image.json"
 
 IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp")
@@ -25,21 +26,33 @@ IMAGE_SUFFIXES = (".jpg", ".jpeg", ".png", ".webp")
 # де текстовий енкодер навчали окремо під той самий простір зображень.
 CANDIDATES: dict[str, dict] = {
     "clip-b32-multilingual": {
+        "backend": "sentence-transformers",
         "image_model": "sentence-transformers/clip-ViT-B-32",
         "text_model": "sentence-transformers/clip-ViT-B-32-multilingual-v1",
         "trust_remote_code": False,
     },
     "jina-clip-v2": {
+        "backend": "sentence-transformers",
         "image_model": "jinaai/jina-clip-v2",
         "text_model": None,  # одна модель на обидві модальності
         "trust_remote_code": True,
     },
+    # SigLIP 2 навчали на багатомовному корпусі, і в transformers він
+    # підтримується нативно — це ж потрібно і для експорту в ONNX.
+    "siglip2-base": {
+        "backend": "transformers",
+        "model": "google/siglip2-base-patch16-224",
+    },
+    "siglip2-large": {
+        "backend": "transformers",
+        "model": "google/siglip2-large-patch16-256",
+    },
 }
 
 
-def load_queries() -> list[tuple[str, str]]:
+def load_queries(path: Path | None = None) -> list[tuple[str, str]]:
     pairs: list[tuple[str, str]] = []
-    for line in QUERIES.read_text(encoding="utf-8").splitlines():
+    for line in (path or QUERIES).read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "|" not in line:
             continue
@@ -49,14 +62,9 @@ def load_queries() -> list[tuple[str, str]]:
     return pairs
 
 
-def evaluate(name: str, spec: dict, images: list[Path], queries: list[tuple[str, str]]) -> dict:
+def _encode_sentence_transformers(spec, pil_images, texts):
     from sentence_transformers import SentenceTransformer
-    from PIL import Image
-    import numpy as np
 
-    print(f"{'=' * 70}\n{name}\n{'=' * 70}")
-
-    load_start = time.perf_counter()
     image_model = SentenceTransformer(
         spec["image_model"], trust_remote_code=spec["trust_remote_code"]
     )
@@ -65,16 +73,63 @@ def evaluate(name: str, spec: dict, images: list[Path], queries: list[tuple[str,
         if spec["text_model"]
         else image_model
     )
-    load_s = time.perf_counter() - load_start
+    yield  # межа заміру завантаження
+    yield image_model.encode(pil_images, normalize_embeddings=True, show_progress_bar=False)
+    yield text_model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+
+
+def _encode_transformers(spec, pil_images, texts):
+    import torch
+    from transformers import AutoModel, AutoProcessor
+
+    model = AutoModel.from_pretrained(spec["model"]).eval()
+    processor = AutoProcessor.from_pretrained(spec["model"])
+    yield
+
+    def as_tensor(out):
+        # transformers 5 повертає то тензор, то об'єкт виходу — залежно від моделі.
+        if hasattr(out, "pooler_output"):
+            return out.pooler_output
+        if hasattr(out, "last_hidden_state"):
+            return out.last_hidden_state[:, 0]
+        return out
+
+    with torch.inference_mode():
+        batch = processor(images=pil_images, return_tensors="pt")
+        image_vecs = as_tensor(model.get_image_features(**batch))
+        yield torch.nn.functional.normalize(image_vecs, dim=-1).numpy()
+
+        # padding="max_length" — SigLIP навчали саме так, інакше якість падає.
+        batch = processor(
+            text=texts, padding="max_length", truncation=True, return_tensors="pt"
+        )
+        text_vecs = as_tensor(model.get_text_features(**batch))
+        yield torch.nn.functional.normalize(text_vecs, dim=-1).numpy()
+
+
+def evaluate(name: str, spec: dict, images: list[Path], queries: list[tuple[str, str]]) -> dict:
+    from PIL import Image
+    import numpy as np
+
+    print(f"{'=' * 70}\n{name}\n{'=' * 70}")
 
     pil_images = [Image.open(p).convert("RGB") for p in images]
+    texts = [q for q, _ in queries]
+
+    encoder = {
+        "sentence-transformers": _encode_sentence_transformers,
+        "transformers": _encode_transformers,
+    }[spec.get("backend", "sentence-transformers")](spec, pil_images, texts)
+
+    load_start = time.perf_counter()
+    next(encoder)
+    load_s = time.perf_counter() - load_start
+
     encode_start = time.perf_counter()
-    image_vecs = image_model.encode(pil_images, normalize_embeddings=True, show_progress_bar=False)
+    image_vecs = next(encoder)
     encode_s = time.perf_counter() - encode_start
 
-    text_vecs = text_model.encode(
-        [q for q, _ in queries], normalize_embeddings=True, show_progress_bar=False
-    )
+    text_vecs = next(encoder)
 
     dim = int(image_vecs.shape[1])
     sims = np.asarray(text_vecs) @ np.asarray(image_vecs).T  # косинус: вектори нормовані
@@ -126,10 +181,12 @@ def evaluate(name: str, spec: dict, images: list[Path], queries: list[tuple[str,
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="+", default=list(CANDIDATES))
+    ap.add_argument("--english", action="store_true",
+                    help="запити англійською — замір стелі моделі")
     args = ap.parse_args()
 
     images = sorted(p for p in IMAGES.iterdir() if p.suffix.lower() in IMAGE_SUFFIXES)
-    queries = load_queries()
+    queries = load_queries(QUERIES_EN if args.english else None)
     print(f"Картинок: {len(images)}, запитів: {len(queries)}\n")
 
     results = {}

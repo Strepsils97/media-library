@@ -1,22 +1,145 @@
 @import "tailwindcss";
 
-/* Палітра-заглушка. Замінюється на ту, що прийде з дизайну.
-   Темна тема основна: контент — це медіа, і світле тло з ним сперечається. */
+/* Шрифти ставляться локально, а не з Google Fonts: застосунок працює офлайн,
+   і зовнішній запит або підвісив би перший рендер, або дав би системний
+   фолбек із поламаною метрикою. */
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-sans/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "@fontsource/ibm-plex-mono/600.css";
+@import "@fontsource/ibm-plex-serif/400.css";
+@import "@fontsource/ibm-plex-serif/400-italic.css";
+
 @theme {
-  --color-ground: #0f1115;
-  --color-surface: #171a21;
-  --color-surface-2: #1f232c;
-  --color-line: #2a2f3a;
-  --color-ink: #e8eaee;
-  --color-ink-dim: #9aa2b1;
-  --color-accent: #6ea8fe;
+  /* Основа й поверхні */
+  --color-ground: #08090b;
+  --color-canvas: #0e0f12;
+  --color-surface: #111317;
+  --color-surface-2: #15171b;
+  --color-surface-3: #1c1f24;
+  --color-line: #282c33;
+  --color-line-2: #2f343c;
+
+  /* Медіа-сцена свідомо темніша за інтерфейс — щоб кадр не зливався з UI. */
+  --color-stage: #050506;
+
+  /* Текст і акцент */
+  --color-ink: #e9e7e3;
+  --color-ink-dim: #9b9a95;
+  --color-ink-dim-2: #8a8b87;
+  --color-ink-faint: #5d6064;
+  --color-ink-mute: #6b6d70;
+  --color-accent: #e9d34a;
+  --color-accent-soft: #e9d34a66;
+  --color-error: #d97066;
+  --color-cool: #8fa8c8;
+
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-serif: "IBM Plex Serif", Georgia, serif;
 }
 
-html, body, #root { height: 100%; }
+/* Світла тема другорядна: той самий hue акценту, але сильно темніший —
+   жовтий #e9d34a на білому нечитний. */
+:root[data-theme="light"] {
+  --color-ground: #f4f2ee;
+  --color-canvas: #faf9f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #f7f5f2;
+  --color-surface-3: #efece7;
+  --color-line: #ddd9d2;
+  --color-line-2: #cdc8c0;
+  --color-stage: #e8e5e0;
+  --color-ink: #1c1b19;
+  --color-ink-dim: #55524d;
+  --color-ink-dim-2: #6a675f;
+  --color-ink-faint: #8d8a83;
+  --color-ink-mute: #7b7871;
+  --color-accent: #8a7212;
+  --color-accent-soft: #8a721255;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
+  margin: 0;
   background: var(--color-ground);
   color: var(--color-ink);
-  font-family: "Segoe UI", system-ui, sans-serif;
-  /* Десктопний застосунок, а не сторінка: гумове прокручування вимкнене. */
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  /* Десктопний застосунок, а не сторінка. */
   overscroll-behavior: none;
+  user-select: none;
+}
+
+/* Числа мають не стрибати при зміні: відсотки схожості стоять стовпчиком. */
+.tnum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Текст, який користувач читає й копіює, виділяти можна. */
+.selectable {
+  user-select: text;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 5px;
+  border: 2px solid var(--color-ground);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-line-2);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes ml-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+@keyframes ml-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+@keyframes ml-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ml-pulse {
+  animation: ml-pulse 1.6s ease-in-out infinite;
+}
+.ml-spin {
+  animation: ml-spin 0.9s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ml-pulse,
+  .ml-spin {
+    animation: none;
+  }
 }

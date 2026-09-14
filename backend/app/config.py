@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+# HuggingFace за замовчуванням розкладає кеш симлінками, а Windows без
+# привілеїв розробника їх створювати не дає — завантаження падає на першому ж
+# файлі. Вимикаємо до першого імпорту huggingface_hub.
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS", "1")
+os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
 
 def _app_root() -> Path:
@@ -38,7 +46,9 @@ class Settings(BaseSettings):
 
     # Обчислення
     device: str = "auto"  # auto | cuda | cpu
-    asr_model: str = "small"
+    # Обрано заміром на Фазі 0: small на цьому контенті розпізнає
+    # 3-4 запити з 13, large-v3-turbo — близько 9.
+    asr_model: str = "large-v3-turbo"
     asr_compute_type: str = "auto"
     asr_languages: tuple[str, ...] = ("uk", "ru", "de")
 

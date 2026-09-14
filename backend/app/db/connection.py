@@ -17,8 +17,8 @@ _SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 # Розмірності векторів. Фіксуються при створенні vec0-таблиць, тому зміна
 # моделі вимагає переіндексації — ці значення записуються у meta, і
 # невідповідність виявляється при старті.
-IMAGE_DIM = 512
-TEXT_DIM = 768
+IMAGE_DIM = 1024  # siglip2-large-patch16-256
+TEXT_DIM = 768   # multilingual-e5-base
 
 _local = threading.local()
 

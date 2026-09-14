@@ -4,7 +4,7 @@ from backend.app.db import connection as db
 from backend.app.main import create_app
 
 
-def test_health_and_schema(tmp_path, monkeypatch):
+def test_health_and_schema(library):
     with TestClient(create_app()) as client:
         resp = client.get("/api/health")
         assert resp.status_code == 200

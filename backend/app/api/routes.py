@@ -1,0 +1,375 @@
+"""HTTP-інтерфейс застосунку."""
+
+from __future__ import annotations
+
+import logging
+import shutil
+import sqlite3
+from pathlib import Path
+
+from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
+
+from ..config import get_settings
+from ..db import repo
+from ..ingest import storage
+from ..ingest.pipeline import index_text
+from ..ml.cuda import resolve_device
+from ..search.query import Filters, search
+from ..worker import queue
+
+log = logging.getLogger(__name__)
+router = APIRouter(prefix="/api")
+
+STAGE_LABELS = queue.STAGE_LABELS
+
+
+# --- моделі запитів -------------------------------------------------------
+
+
+class SearchRequest(BaseModel):
+    query: str = ""
+    kinds: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    date_from: str | None = None
+    date_to: str | None = None
+
+
+class TagRequest(BaseModel):
+    name: str
+
+
+class TextItemRequest(BaseModel):
+    text: str
+    label: str | None = None
+
+
+class ItemPatch(BaseModel):
+    label: str | None = None
+    transcript: str | None = None
+    tags: list[str] | None = None
+
+
+# --- службове -------------------------------------------------------------
+
+
+def _dir_size(path: Path) -> int:
+    if not path.exists():
+        return 0
+    return sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
+
+
+@router.get("/health")
+def health() -> dict:
+    settings = get_settings()
+    return {"status": "ok", "data_dir": str(settings.data_dir)}
+
+
+@router.get("/stats")
+def stats() -> dict:
+    settings = get_settings()
+    usage = shutil.disk_usage(settings.data_dir)
+    return {
+        "item_count": repo.count_items(),
+        "originals_bytes": _dir_size(settings.originals_dir),
+        "frames_bytes": _dir_size(settings.frames_dir),
+        "models_bytes": _dir_size(settings.models_dir),
+        "db_bytes": settings.db_path.stat().st_size if settings.db_path.exists() else 0,
+        "disk_free_bytes": usage.free,
+        "disk_total_bytes": usage.total,
+        "data_dir": str(settings.data_dir),
+    }
+
+
+@router.get("/runtime")
+def runtime() -> dict:
+    settings = get_settings()
+    device, _ = resolve_device(settings.device)
+    counts = repo.job_counts()
+    running = counts.get("running", 0)
+
+    progress = 0.0
+    if running:
+        rows = [j for j in repo.list_jobs(20) if j["status"] == "running"]
+        if rows:
+            progress = sum(float(r["progress"]) for r in rows) / len(rows)
+
+    return {
+        "device": device,
+        "asr_model": settings.asr_model,
+        "jobs_running": running,
+        "jobs_queued": counts.get("queued", 0),
+        "jobs_failed": counts.get("failed", 0),
+        "progress": progress,
+        "paused": queue.is_paused(),
+    }
+
+
+# --- пошук ----------------------------------------------------------------
+
+
+@router.post("/search")
+def do_search(request: SearchRequest) -> dict:
+    return search(Filters(**request.model_dump()))
+
+
+# --- записи ---------------------------------------------------------------
+
+
+def _item_payload(item: sqlite3.Row) -> dict:
+    frames = repo.list_frames(item["id"])
+    return {
+        "id": item["id"],
+        "kind": item["kind"],
+        "label": item["label"],
+        "status": item["status"],
+        "created_at": item["created_at"],
+        "added_at": item["added_at"],
+        "mime": item["mime"],
+        "size_bytes": item["size_bytes"],
+        "duration_s": item["duration_s"],
+        "width": item["width"],
+        "height": item["height"],
+        "text_content": item["text_content"],
+        "transcript": item["transcript"],
+        "transcript_lang": item["transcript_lang"],
+        "transcript_edited": bool(item["transcript_edited"]),
+        "stored_path": item["stored_path"],
+        "tags": repo.tags_for_item(item["id"]),
+        "frames": [
+            {"id": f["id"], "ts_s": f["ts_s"], "url": f"/api/media/frame/{f['id']}"}
+            for f in frames
+        ],
+        "media_url": f"/api/media/original/{item['id']}" if item["stored_path"] else None,
+        "thumb_url": f"/api/media/thumb/{item['id']}" if item["kind"] == "image" else None,
+    }
+
+
+@router.get("/items/{item_id}")
+def get_item(item_id: int) -> dict:
+    item = repo.get_item(item_id)
+    if item is None:
+        raise HTTPException(404, "Запис не знайдено")
+    return _item_payload(item)
+
+
+@router.post("/items/upload")
+async def upload(files: list[UploadFile]) -> list[dict]:
+    """Приймає файли, копіює в бібліотеку й ставить у чергу обробки."""
+    settings = get_settings()
+    inbox = settings.data_dir / "inbox"
+    inbox.mkdir(parents=True, exist_ok=True)
+
+    created: list[dict] = []
+    for upload_file in files:
+        temp = inbox / (upload_file.filename or "file")
+        with temp.open("wb") as handle:
+            shutil.copyfileobj(upload_file.file, handle)
+
+        try:
+            prepared = storage.prepare_file(temp)
+        except storage.UnsupportedFile as exc:
+            created.append({"filename": upload_file.filename, "error": str(exc)})
+            temp.unlink(missing_ok=True)
+            continue
+        finally:
+            upload_file.file.close()
+
+        existing = repo.find_by_hash(prepared.content_hash)
+        if existing is not None:
+            created.append({
+                "filename": upload_file.filename,
+                "item_id": existing["id"],
+                "duplicate": True,
+            })
+            temp.unlink(missing_ok=True)
+            continue
+
+        item_id = repo.create_item(prepared)
+        repo.create_job(item_id, prepared.kind)
+        created.append({
+            "filename": upload_file.filename,
+            "item_id": item_id,
+            "kind": prepared.kind,
+            "label": prepared.label,
+            "duplicate": False,
+        })
+        temp.unlink(missing_ok=True)
+
+    return created
+
+
+@router.post("/items/text")
+def create_text_item(request: TextItemRequest) -> dict:
+    try:
+        prepared = storage.prepare_text(request.text, request.label)
+    except storage.UnsupportedFile as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    existing = repo.find_by_hash(prepared.content_hash)
+    if existing is not None:
+        return {"item_id": existing["id"], "duplicate": True}
+
+    item_id = repo.create_item(prepared)
+    repo.create_job(item_id, "text")
+    return {"item_id": item_id, "kind": "text", "label": prepared.label, "duplicate": False}
+
+
+@router.patch("/items/{item_id}")
+def patch_item(item_id: int, request: ItemPatch) -> dict:
+    item = repo.get_item(item_id)
+    if item is None:
+        raise HTTPException(404, "Запис не знайдено")
+
+    if request.label is not None:
+        repo.update_item(item_id, label=request.label.strip() or item["label"])
+
+    if request.tags is not None:
+        repo.set_item_tags(item_id, request.tags)
+
+    if request.transcript is not None and request.transcript != item["transcript"]:
+        repo.update_item(item_id, transcript=request.transcript, transcript_edited=1)
+        # Правка транскрипції змінює те, за чим шукається запис, тому вектори
+        # перебудовуються одразу — інакше пошук лишився б на старому тексті.
+        index_text(item_id, request.transcript)
+
+    return _item_payload(repo.get_item(item_id))
+
+
+@router.delete("/items/{item_id}")
+def remove_item(item_id: int) -> dict:
+    settings = get_settings()
+    item = repo.delete_item(item_id)
+    if item is None:
+        raise HTTPException(404, "Запис не знайдено")
+
+    # Видалення запису прибирає й скопійований оригінал: бібліотека не має
+    # накопичувати файли, на які вже ніщо не посилається.
+    if item["stored_path"]:
+        (settings.originals_dir / item["stored_path"]).unlink(missing_ok=True)
+    if item["content_hash"]:
+        thumb = settings.thumbs_dir / item["content_hash"][:2] / f"{item['content_hash']}.webp"
+        thumb.unlink(missing_ok=True)
+    return {"deleted": item_id}
+
+
+# --- медіа ----------------------------------------------------------------
+
+
+@router.get("/media/original/{item_id}")
+def media_original(item_id: int) -> FileResponse:
+    settings = get_settings()
+    item = repo.get_item(item_id)
+    if item is None or not item["stored_path"]:
+        raise HTTPException(404, "Файл не знайдено")
+    path = settings.originals_dir / item["stored_path"]
+    if not path.exists():
+        raise HTTPException(404, "Файл не знайдено на диску")
+    return FileResponse(path, media_type=item["mime"] or "application/octet-stream")
+
+
+@router.get("/media/thumb/{item_id}")
+def media_thumb(item_id: int) -> FileResponse:
+    settings = get_settings()
+    item = repo.get_item(item_id)
+    if item is None or not item["content_hash"]:
+        raise HTTPException(404, "Прев'ю не знайдено")
+    path = settings.thumbs_dir / item["content_hash"][:2] / f"{item['content_hash']}.webp"
+    if not path.exists():
+        raise HTTPException(404, "Прев'ю ще не готове")
+    return FileResponse(path, media_type="image/webp")
+
+
+@router.get("/media/frame/{frame_id}")
+def media_frame(frame_id: int) -> FileResponse:
+    settings = get_settings()
+    row = repo.get_frame(frame_id)
+    if row is None:
+        raise HTTPException(404, "Кадр не знайдено")
+    path = settings.frames_dir / row["path"]
+    if not path.exists():
+        raise HTTPException(404, "Кадр не знайдено на диску")
+    return FileResponse(path, media_type="image/webp")
+
+
+# --- теги -----------------------------------------------------------------
+
+
+@router.get("/tags")
+def get_tags() -> list[dict]:
+    return [
+        {"id": row["id"], "name": row["name"], "usage_count": row["usage_count"]}
+        for row in repo.list_tags()
+    ]
+
+
+@router.post("/tags")
+def post_tag(request: TagRequest) -> dict:
+    name = request.name.strip()
+    if not name:
+        raise HTTPException(400, "Порожня назва тега")
+    try:
+        row = repo.create_tag(name)
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, f"Тег «{name}» уже існує") from exc
+    return {"id": row["id"], "name": row["name"], "usage_count": 0}
+
+
+@router.patch("/tags/{tag_id}")
+def patch_tag(tag_id: int, request: TagRequest) -> dict:
+    name = request.name.strip()
+    if not name:
+        raise HTTPException(400, "Порожня назва тега")
+    try:
+        repo.rename_tag(tag_id, name)
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, f"Тег «{name}» уже існує") from exc
+    return {"id": tag_id, "name": name}
+
+
+@router.delete("/tags/{tag_id}")
+def remove_tag(tag_id: int) -> dict:
+    repo.delete_tag(tag_id)
+    return {"deleted": tag_id}
+
+
+# --- черга ----------------------------------------------------------------
+
+
+@router.get("/jobs")
+def get_jobs() -> list[dict]:
+    result = []
+    for row in repo.list_jobs():
+        result.append({
+            "id": row["id"],
+            "item_id": row["item_id"],
+            "kind": row["kind"] or row["type"],
+            "label": row["label"] or "—",
+            "source_name": Path(row["stored_path"]).name if row["stored_path"] else "вставлений текст",
+            "type": row["type"],
+            "stage": STAGE_LABELS.get(row["type"], row["type"]),
+            "status": row["status"],
+            "progress": float(row["progress"]),
+            "eta_s": None,
+            "error": row["error"],
+        })
+    return result
+
+
+@router.post("/jobs/{job_id}/retry")
+def retry_job(job_id: int) -> dict:
+    repo.update_job(job_id, status="queued", progress=0.0, error=None)
+    return {"id": job_id, "status": "queued"}
+
+
+@router.delete("/jobs/{job_id}")
+def cancel_job(job_id: int) -> dict:
+    repo.update_job(job_id, status="done", error=None)
+    return {"cancelled": job_id}
+
+
+@router.post("/jobs/pause")
+def pause_jobs(value: bool = True) -> dict:
+    queue.pause(value)
+    return {"paused": queue.is_paused()}

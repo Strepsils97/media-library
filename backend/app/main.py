@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import socket
+import sys
 import threading
 from contextlib import asynccontextmanager
 
@@ -12,8 +13,10 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from .api.routes import router
 from .config import get_settings
 from .db.connection import init_db
+from .worker import queue
 
 log = logging.getLogger(__name__)
 
@@ -23,25 +26,37 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     settings.ensure_dirs()
     init_db()
+    queue.start()
+
+    # Ваги важать гігабайти, і перше ж завантаження блокує потік на десятки
+    # секунд. Гріємо у фоні, щоб вікно відкрилося одразу.
+    threading.Thread(target=_warm_up, name="warm-up", daemon=True).start()
+
     log.info("Бібліотека готова: %s", settings.db_path)
     yield
+    queue.stop()
+
+
+def _warm_up() -> None:
+    from .ml.registry import warm_up
+
+    try:
+        warm_up()
+        log.info("Моделі завантажено")
+    except Exception:
+        log.exception("Не вдалося завантажити моделі")
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title="media-library", lifespan=lifespan)
-
-    @app.get("/api/health")
-    def health() -> dict[str, object]:
-        return {
-            "status": "ok",
-            "data_dir": str(settings.data_dir),
-            "db": settings.db_path.exists(),
-        }
+    app.include_router(router)
 
     frontend = settings.frontend_dir
     if frontend.exists():
-        app.mount("/assets", StaticFiles(directory=frontend / "assets"), name="assets")
+        assets = frontend / "assets"
+        if assets.exists():
+            app.mount("/assets", StaticFiles(directory=assets), name="assets")
 
         @app.get("/{path:path}")
         def spa(path: str) -> FileResponse:
@@ -50,6 +65,8 @@ def create_app() -> FastAPI:
             if path and candidate.is_file():
                 return FileResponse(candidate)
             return FileResponse(frontend / "index.html")
+    else:
+        log.warning("Фронтенд не зібрано: %s не існує", frontend)
 
     return app
 
@@ -69,7 +86,7 @@ def run() -> None:
     config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
     server = uvicorn.Server(config)
 
-    thread = threading.Thread(target=server.run, daemon=True)
+    thread = threading.Thread(target=server.run, name="uvicorn", daemon=True)
     thread.start()
 
     webview.create_window(
@@ -77,12 +94,21 @@ def run() -> None:
         f"http://127.0.0.1:{port}",
         width=1400,
         height=900,
-        min_size=(900, 600),
+        min_size=(940, 620),
+        background_color="#08090b",
     )
     webview.start()
     server.should_exit = True
 
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+        stream=sys.stdout,
+    )
     run()
+
+
+if __name__ == "__main__":
+    main()
