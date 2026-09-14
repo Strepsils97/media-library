@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* Палітра-заглушка. Замінюється на ту, що прийде з дизайну.
+   Темна тема основна: контент — це медіа, і світле тло з ним сперечається. */
+@theme {
+  --color-ground: #0f1115;
+  --color-surface: #171a21;
+  --color-surface-2: #1f232c;
+  --color-line: #2a2f3a;
+  --color-ink: #e8eaee;
+  --color-ink-dim: #9aa2b1;
+  --color-accent: #6ea8fe;
+}
+
+html, body, #root { height: 100%; }
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  /* Десктопний застосунок, а не сторінка: гумове прокручування вимкнене. */
+  overscroll-behavior: none;
+}
