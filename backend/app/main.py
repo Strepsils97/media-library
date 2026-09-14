@@ -101,12 +101,37 @@ def run() -> None:
     server.should_exit = True
 
 
-def main() -> None:
+def _setup_logging() -> None:
+    """Лог у файл поруч із бібліотекою, плюс stdout, якщо він є.
+
+    У віконному режимі stdout може бути відсутній або не вміти кирилицю
+    (Windows віддає cp1252), і тоді кожен україномовний запис перетворюється
+    на UnicodeEncodeError, який ховає справжню помилку. Файл у UTF-8 — єдине
+    місце, де видно, що насправді сталося.
+    """
+    settings = get_settings()
+    settings.ensure_dirs()
+
+    handlers: list[logging.Handler] = [
+        logging.FileHandler(settings.data_dir / "app.log", encoding="utf-8")
+    ]
+    if sys.stdout is not None:
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+        handlers.append(logging.StreamHandler(sys.stdout))
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
-        stream=sys.stdout,
+        handlers=handlers,
+        force=True,
     )
+
+
+def main() -> None:
+    _setup_logging()
     run()
 
 

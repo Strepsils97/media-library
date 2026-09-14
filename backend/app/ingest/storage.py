@@ -15,6 +15,7 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 from ..config import get_settings
+from .media_tools import ffprobe
 
 log = logging.getLogger(__name__)
 
@@ -87,7 +88,7 @@ def default_label(*, path: Path | None = None, text: str | None = None, words: i
 
 def _ffprobe(path: Path) -> dict:
     result = subprocess.run(
-        ["ffprobe", "-v", "error", "-print_format", "json",
+        [ffprobe(), "-v", "error", "-print_format", "json",
          "-show_format", "-show_streams", str(path)],
         capture_output=True, text=True, check=False,
     )

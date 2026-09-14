@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 
 from ..config import get_settings
+from .media_tools import ffmpeg
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ def _scene_timestamps(path: Path, threshold: float = 0.30) -> list[float]:
     а його scene-фільтр дає цілком придатні межі.
     """
     result = subprocess.run(
-        ["ffmpeg", "-hide_banner", "-i", str(path),
+        [ffmpeg(), "-hide_banner", "-i", str(path),
          "-filter:v", f"select='gt(scene,{threshold})',showinfo",
          "-f", "null", "-"],
         capture_output=True, text=True, check=False, errors="replace",
@@ -72,7 +73,7 @@ def extract(path: Path, timestamps: list[float], content_hash: str) -> list[tupl
         target = settings.frames_dir / relative
         if not target.exists():
             result = subprocess.run(
-                ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
+                [ffmpeg(), "-hide_banner", "-loglevel", "error", "-y",
                  "-ss", f"{ts:.3f}", "-i", str(path), "-frames:v", "1",
                  "-vf", "scale='min(512,iw)':-2", str(target)],
                 capture_output=True, text=True, check=False,

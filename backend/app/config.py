@@ -17,6 +17,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS", "1")
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 
+# У зібраному застосунку всі ваги лежать поруч. Без цього huggingface_hub
+# усе одно лізе в мережу «звіритися з версією» — а застосунок офлайновий,
+# і на машині без інтернету це обернулося б таймаутом при кожному старті.
+if getattr(sys, "frozen", False):
+    os.environ.setdefault("HF_HUB_OFFLINE", "1")
+    os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+
 
 def _app_root() -> Path:
     """Корінь застосунку.
