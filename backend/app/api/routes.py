@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+from .. import settings_store
 from ..config import get_settings
 from ..db import repo
 from ..ingest import storage
@@ -43,6 +44,14 @@ class TagRequest(BaseModel):
 class TextItemRequest(BaseModel):
     text: str
     label: str | None = None
+
+
+class SettingsPatch(BaseModel):
+    asr_model: str | None = None
+    device: str | None = None
+    theme: str | None = None
+    max_frames_per_video: int | None = None
+    snippet_words: int | None = None
 
 
 class ItemPatch(BaseModel):
@@ -104,6 +113,30 @@ def runtime() -> dict:
         "progress": progress,
         "paused": queue.is_paused(),
     }
+
+
+@router.get("/settings")
+def get_user_settings() -> dict:
+    return settings_store.current()
+
+
+@router.patch("/settings")
+def patch_user_settings(request: SettingsPatch) -> dict:
+    try:
+        return settings_store.update(request.model_dump(exclude_none=True))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.post("/library/reindex")
+def reindex() -> dict:
+    """Ставить усі записи в чергу на повторну обробку.
+
+    Потрібно після зміни моделі розпізнавання: транскрипції старих записів
+    інакше лишилися б від попередньої моделі, і бібліотека стала б різнорідною.
+    """
+    queued = repo.requeue_all()
+    return {"queued": queued}
 
 
 # --- пошук ----------------------------------------------------------------
@@ -365,8 +398,24 @@ def retry_job(job_id: int) -> dict:
 
 @router.delete("/jobs/{job_id}")
 def cancel_job(job_id: int) -> dict:
-    repo.update_job(job_id, status="done", error=None)
-    return {"cancelled": job_id}
+    """Знімає задачу з черги або перериває ту, що виконується."""
+    job = next((j for j in repo.list_jobs(500) if j["id"] == job_id), None)
+    if job is None:
+        raise HTTPException(404, "Задачу не знайдено")
+
+    if job["status"] == "running":
+        # Модель не вміє зупинятися посеред виклику — воркер перевірить
+        # прапорець на наступному кроці й перерве обробку сам.
+        queue.request_cancel(job_id)
+        return {"cancelled": job_id, "pending": True}
+
+    repo.update_job(job_id, status="done", error="Знято з черги")
+    return {"cancelled": job_id, "pending": False}
+
+
+@router.post("/jobs/clear-done")
+def clear_done() -> dict:
+    return {"removed": repo.clear_done_jobs()}
 
 
 @router.post("/jobs/pause")

@@ -68,6 +68,15 @@ def process_audio(item_id: int, on_progress=None) -> None:
     assert item is not None
     path = settings.originals_dir / item["stored_path"]
 
+    if item["transcript_edited"] and item["transcript"]:
+        # Людина вже виправила машинний текст. Переіндексація не має права
+        # затирати цю роботу: переганяємо лише вектори, а сам текст лишаємо.
+        log.info("Запис %s має виправлену транскрипцію — розпізнавання пропущено", item_id)
+        if on_progress:
+            on_progress(1.0)
+        index_text(item_id, item["transcript"])
+        return
+
     transcript = asr.transcribe(path, on_progress=on_progress)
     repo.update_item(
         item_id,

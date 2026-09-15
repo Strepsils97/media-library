@@ -11,6 +11,7 @@ from pathlib import Path
 import sqlite_vec
 
 from ..config import get_settings
+from . import migrations
 
 _SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 
@@ -63,6 +64,12 @@ def get_connection() -> sqlite3.Connection:
 
 
 def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
+    """Готує базу до роботи: схема, міграції, векторні таблиці.
+
+    Викликається на кожному старті. Оновлення застосунку зводиться до заміни
+    файлів: тека з даними лишається на місці, а база доводиться тут до того
+    стану, якого очікує новий код.
+    """
     conn = conn or get_connection()
     conn.executescript(_SCHEMA_PATH.read_text(encoding="utf-8"))
 
@@ -72,28 +79,44 @@ def init_db(conn: sqlite3.Connection | None = None) -> sqlite3.Connection:
     conn.execute(
         f"CREATE VIRTUAL TABLE IF NOT EXISTS vec_text USING vec0(embedding float[{TEXT_DIM}])"
     )
+    conn.commit()
 
-    _check_dims(conn)
+    migrations.run(conn)
+    _reconcile_dims(conn)
     conn.commit()
     return conn
 
 
-def _check_dims(conn: sqlite3.Connection) -> None:
-    """Розмірності мають збігатися з тими, з якими базу створили.
+def _reconcile_dims(conn: sqlite3.Connection) -> None:
+    """Звіряє розмірності векторів із тими, що очікує код.
 
-    Інакше в один простір потраплять вектори різних моделей, і пошук почне
-    тихо повертати дурницю замість того, щоб впасти.
+    Розмірність фіксується при створенні vec0-таблиці, тож нова версія з
+    іншою моделлю ембедінгу не змогла б із нею працювати. Раніше це було
+    фатальною помилкою — застосунок просто не стартував. Тепер простір
+    перебудовується, а записи стають у чергу на переобробку: файли, теги й
+    виправлені транскрипції при цьому лишаються цілими.
     """
-    expected = {"image_dim": str(IMAGE_DIM), "text_dim": str(TEXT_DIM)}
-    for key, value in expected.items():
+    for key, space, dim in (
+        ("image_dim", "image", IMAGE_DIM),
+        ("text_dim", "text", TEXT_DIM),
+    ):
         row = conn.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
         if row is None:
-            conn.execute("INSERT INTO meta(key, value) VALUES (?, ?)", (key, value))
-        elif row["value"] != value:
-            raise RuntimeError(
-                f"Розмірність '{key}' у базі — {row['value']}, а код очікує {value}. "
-                "Змінилася модель: потрібна переіндексація бібліотеки."
+            conn.execute(
+                "INSERT INTO meta(key, value) VALUES (?, ?)", (key, str(dim))
             )
+            continue
+
+        if row["value"] == str(dim):
+            continue
+
+        migrations.rebuild_vector_space(
+            conn, space, dim,
+            reason=f"розмірність змінилася з {row['value']} на {dim}",
+        )
+        conn.execute(
+            "UPDATE meta SET value = ? WHERE key = ?", (str(dim), key)
+        )
 
 
 def knn(

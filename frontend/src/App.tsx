@@ -8,13 +8,14 @@ import { SearchScreen } from "./screens/SearchScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { TagsScreen } from "./screens/TagsScreen";
 import { ViewerScreen } from "./screens/ViewerScreen";
-import type { LibraryStats, RuntimeStatus, SearchHit } from "./types";
+import type { LibraryStats, RuntimeStatus, SearchHit, UserSettings } from "./types";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("search");
   const [stats, setStats] = useState<LibraryStats | null>(null);
   const [runtime, setRuntime] = useState<RuntimeStatus | null>(null);
   const [viewing, setViewing] = useState<SearchHit | null>(null);
+  const [settings, setSettings] = useState<UserSettings | null>(null);
 
   const refresh = useCallback(() => {
     api.stats().then(setStats).catch(() => undefined);
@@ -29,11 +30,22 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [refresh]);
 
+  useEffect(() => {
+    api.settings().then(setSettings).catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    // Тема живе на кореневому елементі: CSS-змінні перевизначаються за
+    // [data-theme], тож перемикання не потребує перерендеру дерева.
+    document.documentElement.dataset.theme = settings?.theme ?? "dark";
+  }, [settings?.theme]);
+
   if (viewing) {
     return (
       <ViewerScreen
         hit={viewing}
         onBack={() => setViewing(null)}
+        onChanged={refresh}
         onDeleted={() => {
           setViewing(null);
           refresh();
@@ -53,7 +65,9 @@ export default function App() {
       {screen === "add" && <AddScreen onAdded={refresh} />}
       {screen === "queue" && <QueueScreen />}
       {screen === "tags" && <TagsScreen />}
-      {screen === "settings" && <SettingsScreen stats={stats} runtime={runtime} />}
+      {screen === "settings" && (
+        <SettingsScreen stats={stats} runtime={runtime} onSettings={setSettings} />
+      )}
     </AppShell>
   );
 }

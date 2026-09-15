@@ -16,4 +16,27 @@ def library(tmp_path, monkeypatch):
 
     monkeypatch.setattr(connection, "get_settings", lambda: settings)
     monkeypatch.setattr(storage, "get_settings", lambda: settings)
-    return settings
+
+    from backend.app import settings_store
+
+    monkeypatch.setattr(settings_store, "get_settings", lambda: settings)
+    monkeypatch.setattr(settings_store, "_extra", {"theme": "dark"})
+
+    # Жоден тест не має вантажити справжні ваги: це гігабайти й хвилини.
+    from backend.app.ml import registry
+
+    registry.use_stubs()
+
+    # З'єднання кешується в потоко-локальному сховищі, тож без скидання
+    # наступний тест працював би з базою попереднього.
+    _close_connection(connection)
+    yield settings
+    _close_connection(connection)
+    registry.reset()
+
+
+def _close_connection(connection) -> None:
+    conn = getattr(connection._local, "conn", None)
+    if conn is not None:
+        conn.close()
+        del connection._local.conn

@@ -77,4 +77,42 @@ export interface RuntimeStatus {
   jobs_queued: number;
   jobs_failed: number;
   progress: number;
+  paused: boolean;
+}
+
+export interface ItemDetail {
+  id: number;
+  kind: Kind;
+  label: string;
+  status: ItemStatus;
+  created_at: string;
+  added_at: string;
+  mime: string | null;
+  size_bytes: number | null;
+  duration_s: number | null;
+  width: number | null;
+  height: number | null;
+  text_content: string | null;
+  transcript: string | null;
+  transcript_lang: string | null;
+  transcript_edited: boolean;
+  tags: string[];
+  frames: { id: number; ts_s: number; url: string }[];
+  media_url: string | null;
+  thumb_url: string | null;
+}
+
+export interface UserSettings {
+  app_version: string;
+  schema_version: number;
+  asr_model: string;
+  device: "auto" | "cuda" | "cpu";
+  theme: "dark" | "light";
+  max_frames_per_video: number;
+  snippet_words: number;
+  available: {
+    asr_models: string[];
+    devices: string[];
+    themes: string[];
+  };
 }

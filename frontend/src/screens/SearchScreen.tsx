@@ -158,6 +158,21 @@ export function SearchScreen({ libraryEmpty, onOpen }: Props) {
     if (result) run(next);
   };
 
+  const setDate = (field: "date_from" | "date_to", value: string) => {
+    // <input type="date"> дає YYYY-MM-DD, а в базі created_at — ISO-8601.
+    // Верхню межу розтягуємо до кінця доби, інакше «до 5 травня» відсікало б
+    // усе, зняте того самого дня після опівночі.
+    const iso =
+      value === ""
+        ? null
+        : field === "date_from"
+          ? `${value}T00:00:00+00:00`
+          : `${value}T23:59:59+00:00`;
+    const next = { ...filters, [field]: iso };
+    setFilters(next);
+    if (result) run(next);
+  };
+
   const toggleTag = (name: string) => {
     const next = {
       ...filters,
@@ -176,7 +191,10 @@ export function SearchScreen({ libraryEmpty, onOpen }: Props) {
   };
 
   const hasFilters =
-    filters.kinds.length > 0 || filters.tags.length > 0 || filters.date_from !== null;
+    filters.kinds.length > 0 ||
+    filters.tags.length > 0 ||
+    filters.date_from !== null ||
+    filters.date_to !== null;
 
   if (libraryEmpty) return <LibraryEmpty />;
 
@@ -212,6 +230,28 @@ export function SearchScreen({ libraryEmpty, onOpen }: Props) {
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <SectionLabel>Дата створення</SectionLabel>
+          <div className="space-y-1">
+            {(
+              [
+                ["date_from", "від"],
+                ["date_to", "до"],
+              ] as const
+            ).map(([field, label]) => (
+              <label key={field} className="flex items-center gap-2">
+                <span className="w-5 text-[11px] text-ink-faint">{label}</span>
+                <input
+                  type="date"
+                  value={filters[field]?.slice(0, 10) ?? ""}
+                  onChange={(e) => setDate(field, e.target.value)}
+                  className="tnum min-w-0 flex-1 rounded border border-line bg-surface px-1.5 py-1 text-[11px] text-ink focus:border-line-2 focus:outline-none"
+                />
+              </label>
+            ))}
           </div>
         </div>
 

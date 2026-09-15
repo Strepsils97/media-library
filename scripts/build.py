@@ -53,7 +53,23 @@ def main() -> None:
     # лише самі знімки, а blobs дублювали б їх ще раз.
     shutil.copytree(source, target, ignore=shutil.ignore_patterns("blobs", ".locks"))
 
-    print("3/3 перевірка…")
+    print("3/4 підпис…")
+    sign = ROOT / "scripts" / "sign.ps1"
+    signed = subprocess.run(
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(sign)],
+        cwd=ROOT, capture_output=True, text=True, check=False, encoding="utf-8",
+        errors="replace",
+    )
+    if signed.returncode == 0:
+        for line in signed.stdout.splitlines():
+            if line.strip():
+                print("  " + line.strip())
+    else:
+        # Підпис не критичний: exe працює й без нього, просто Windows
+        # показуватиме «Невідомий видавець».
+        print("  УВАГА: підписати не вдалося —", signed.stderr.strip()[:200])
+
+    print("4/4 перевірка…")
     checks = {
         "exe": DIST / "media-library.exe",
         "фронтенд": INTERNAL / "frontend" / "dist" / "index.html",

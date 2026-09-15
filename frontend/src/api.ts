@@ -1,10 +1,12 @@
 import type {
+  ItemDetail,
   Job,
   LibraryStats,
   RuntimeStatus,
   SearchFilters,
   SearchResponse,
   Tag,
+  UserSettings,
 } from "./types";
 
 class ApiError extends Error {
@@ -47,9 +49,35 @@ export const api = {
     request<Tag>(`/tags/${id}`, { method: "PATCH", body: JSON.stringify({ name }) }),
   deleteTag: (id: number) => request<void>(`/tags/${id}`, { method: "DELETE" }),
 
+  item: (id: number) => request<ItemDetail>(`/items/${id}`),
+  patchItem: (id: number, payload: Partial<Pick<ItemDetail, "label" | "transcript" | "tags">>) =>
+    request<ItemDetail>(`/items/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  deleteItem: (id: number) => request<void>(`/items/${id}`, { method: "DELETE" }),
+  createText: (text: string) =>
+    request<{ item_id: number; duplicate: boolean }>("/items/text", {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+
+  settings: () => request<UserSettings>("/settings"),
+  saveSettings: (patch: Partial<UserSettings>) =>
+    request<UserSettings>("/settings", {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  reindex: () =>
+    request<{ queued: number }>("/library/reindex", { method: "POST" }),
+
   jobs: () => request<Job[]>("/jobs"),
   retryJob: (id: number) => request<Job>(`/jobs/${id}/retry`, { method: "POST" }),
   cancelJob: (id: number) => request<void>(`/jobs/${id}`, { method: "DELETE" }),
+  clearDoneJobs: () =>
+    request<{ removed: number }>("/jobs/clear-done", { method: "POST" }),
+  pauseJobs: (value: boolean) =>
+    request<{ paused: boolean }>(`/jobs/pause?value=${value}`, { method: "POST" }),
 };
 
 export { ApiError };

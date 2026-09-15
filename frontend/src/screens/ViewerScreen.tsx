@@ -1,26 +1,9 @@
+import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
 
+import { api } from "../api";
 import { SimilarityRing } from "../components/SimilarityRing";
-import type { Kind, SearchHit } from "../types";
-
-interface ItemDetail {
-  id: number;
-  kind: Kind;
-  label: string;
-  created_at: string;
-  added_at: string;
-  mime: string | null;
-  size_bytes: number | null;
-  duration_s: number | null;
-  width: number | null;
-  height: number | null;
-  text_content: string | null;
-  transcript: string | null;
-  transcript_lang: string | null;
-  tags: string[];
-  frames: { id: number; ts_s: number; url: string }[];
-  media_url: string | null;
-}
+import type { ItemDetail, SearchHit, Tag } from "../types";
 
 function formatTime(seconds: number): string {
   const total = Math.round(seconds);
@@ -51,30 +34,99 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
+function DeleteDialog({
+  item,
+  onCancel,
+  onConfirm,
+}: {
+  item: ItemDetail;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-6">
+      <div className="w-full max-w-[420px] rounded-lg border border-line bg-surface p-5">
+        <h2 className="text-[15px] font-semibold text-ink">Видалити «{item.label}»?</h2>
+        <p className="mt-2 text-[13px] leading-[1.6] text-ink-dim">
+          Запис зникне з бібліотеки, і разом із ним буде видалено копію файлу в
+          теці бібліотеки. Вихідний файл, з якого його додавали, не постраждає.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded border border-line bg-surface-2 px-3 py-1.5 text-[12px] text-ink-dim hover:text-ink"
+          >
+            Скасувати
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded bg-error px-3 py-1.5 text-[12px] font-medium text-ground"
+          >
+            Видалити
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   hit: SearchHit;
   onBack: () => void;
+  onChanged: () => void;
   onDeleted: () => void;
 }
 
-export function ViewerScreen({ hit, onBack, onDeleted }: Props) {
+export function ViewerScreen({ hit, onBack, onChanged, onDeleted }: Props) {
   const [item, setItem] = useState<ItemDetail | null>(null);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [editing, setEditing] = useState(false);
+  const [draftLabel, setDraftLabel] = useState("");
+  const [draftTags, setDraftTags] = useState<string[]>([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const mediaRef = useRef<HTMLVideoElement & HTMLAudioElement>(null);
 
   useEffect(() => {
-    fetch(`/api/items/${hit.item_id}`)
-      .then((r) => r.json())
-      .then(setItem)
-      .catch(() => undefined);
+    api.item(hit.item_id).then(setItem).catch((e) => setError((e as Error).message));
+    api.tags().then(setTags).catch(() => undefined);
   }, [hit.item_id]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onBack();
+      if (event.key === "Escape") {
+        if (confirmDelete) setConfirmDelete(false);
+        else if (editing) setEditing(false);
+        else onBack();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onBack]);
+  }, [onBack, editing, confirmDelete]);
+
+  const startEditing = () => {
+    if (!item) return;
+    setDraftLabel(item.label);
+    setDraftTags(item.tags);
+    setEditing(true);
+  };
+
+  const saveEdits = async () => {
+    if (!item) return;
+    try {
+      const updated = await api.patchItem(item.id, {
+        label: draftLabel,
+        tags: draftTags,
+      });
+      setItem(updated);
+      setEditing(false);
+      onChanged();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
 
   const seekToMatch = () => {
     if (mediaRef.current && hit.match_ts_s !== null) {
@@ -83,21 +135,18 @@ export function ViewerScreen({ hit, onBack, onDeleted }: Props) {
     }
   };
 
-  const remove = async () => {
-    await fetch(`/api/items/${hit.item_id}`, { method: "DELETE" });
-    onDeleted();
-  };
-
   if (!item) {
     return (
       <div className="flex h-full items-center justify-center">
-        <span className="ml-pulse text-[12px] text-ink-faint">завантаження…</span>
+        <span className={clsx("text-[12px]", error ? "text-error" : "ml-pulse text-ink-faint")}>
+          {error ?? "завантаження…"}
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-ground">
       <div className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-2.5">
         <button
           type="button"
@@ -119,13 +168,38 @@ export function ViewerScreen({ hit, onBack, onDeleted }: Props) {
             До збігу {formatTime(hit.match_ts_s)}
           </button>
         )}
-        <button
-          type="button"
-          onClick={remove}
-          className="ml-auto rounded border border-line bg-surface px-2.5 py-1 text-[12px] text-ink-dim hover:border-error hover:text-error"
-        >
-          Видалити
-        </button>
+
+        <div className="ml-auto flex items-center gap-2">
+          {error && <span className="text-[11px] text-error">{error}</span>}
+          <button
+            type="button"
+            onClick={editing ? saveEdits : startEditing}
+            className={clsx(
+              "rounded px-2.5 py-1 text-[12px]",
+              editing
+                ? "bg-accent font-medium text-ground"
+                : "border border-line bg-surface text-ink-dim hover:border-line-2 hover:text-ink",
+            )}
+          >
+            {editing ? "Зберегти" : "Редагувати"}
+          </button>
+          {editing && (
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="rounded border border-line bg-surface px-2.5 py-1 text-[12px] text-ink-dim hover:text-ink"
+            >
+              Скасувати
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="rounded border border-line bg-surface px-2.5 py-1 text-[12px] text-ink-dim hover:border-error hover:text-error"
+          >
+            Видалити
+          </button>
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -138,7 +212,12 @@ export function ViewerScreen({ hit, onBack, onDeleted }: Props) {
             />
           )}
           {item.kind === "video" && item.media_url && (
-            <video ref={mediaRef} src={item.media_url} controls className="max-h-full max-w-full" />
+            <video
+              ref={mediaRef}
+              src={item.media_url}
+              controls
+              className="max-h-full max-w-full"
+            />
           )}
           {item.kind === "audio" && item.media_url && (
             <audio ref={mediaRef} src={item.media_url} controls className="w-[70%]" />
@@ -151,35 +230,85 @@ export function ViewerScreen({ hit, onBack, onDeleted }: Props) {
         </div>
 
         <aside className="w-[260px] shrink-0 space-y-4 overflow-y-auto border-l border-line bg-canvas p-4">
-          <Meta label="Лейбл">{item.label}</Meta>
+          <div>
+            <div className="font-mono text-[10px] font-semibold tracking-[0.14em] text-ink-faint uppercase">
+              Лейбл
+            </div>
+            {editing ? (
+              <input
+                value={draftLabel}
+                onChange={(e) => setDraftLabel(e.target.value)}
+                className="selectable mt-1 w-full rounded border border-accent bg-surface px-2 py-1 text-[12px] text-ink focus:outline-none"
+              />
+            ) : (
+              <div className="selectable mt-0.5 text-[12px] break-words text-ink-dim">
+                {item.label}
+              </div>
+            )}
+          </div>
+
           <Meta label="Тип">
             {item.kind === "image" && `Зображення · ${item.width}×${item.height}`}
-            {item.kind === "video" &&
-              `Відео · ${formatTime(item.duration_s ?? 0)}`}
-            {item.kind === "audio" &&
-              `Аудіо · ${formatTime(item.duration_s ?? 0)}`}
+            {item.kind === "video" && `Відео · ${formatTime(item.duration_s ?? 0)}`}
+            {item.kind === "audio" && `Аудіо · ${formatTime(item.duration_s ?? 0)}`}
             {item.kind === "text" && "Текст"}
             {item.size_bytes ? ` · ${formatBytes(item.size_bytes)}` : ""}
           </Meta>
-          <Meta label="Додано">
-            {new Date(item.added_at).toLocaleString("uk-UA")}
-          </Meta>
-          <Meta label="Теги">
-            {item.tags.length === 0 ? (
-              <span className="text-ink-faint">без тегів</span>
+
+          <Meta label="Додано">{new Date(item.added_at).toLocaleString("uk-UA")}</Meta>
+
+          <div>
+            <div className="font-mono text-[10px] font-semibold tracking-[0.14em] text-ink-faint uppercase">
+              Теги
+            </div>
+            {editing ? (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {tags.length === 0 ? (
+                  <span className="text-[11px] text-ink-faint">словник порожній</span>
+                ) : (
+                  tags.map((tag) => {
+                    const active = draftTags.includes(tag.name);
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() =>
+                          setDraftTags(
+                            active
+                              ? draftTags.filter((t) => t !== tag.name)
+                              : [...draftTags, tag.name],
+                          )
+                        }
+                        className={clsx(
+                          "rounded-sm px-1.5 py-[1px] text-[11px] transition-colors",
+                          active
+                            ? "bg-accent text-ground"
+                            : "bg-surface-3 text-ink-dim-2 hover:text-ink",
+                        )}
+                      >
+                        {tag.name}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             ) : (
-              <span className="flex flex-wrap gap-1">
-                {item.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-sm bg-surface-3 px-1.5 py-[1px] text-[11px]"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </span>
+              <div className="mt-0.5 flex flex-wrap gap-1">
+                {item.tags.length === 0 ? (
+                  <span className="text-[11px] text-ink-faint">без тегів</span>
+                ) : (
+                  item.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-sm bg-surface-3 px-1.5 py-[1px] text-[11px] text-ink-dim"
+                    >
+                      {tag}
+                    </span>
+                  ))
+                )}
+              </div>
             )}
-          </Meta>
+          </div>
 
           {item.frames.length > 0 && (
             <div>
@@ -218,10 +347,26 @@ export function ViewerScreen({ hit, onBack, onDeleted }: Props) {
               <p className="selectable mt-1 text-[12px] leading-[1.6] text-ink-dim">
                 {item.transcript}
               </p>
+              <p className="mt-1 text-[11px] text-ink-faint">
+                {item.transcript_edited
+                  ? "виправлено вручну"
+                  : "машинний текст · правиться на екрані «Додати»"}
+              </p>
             </div>
           )}
         </aside>
       </div>
+
+      {confirmDelete && (
+        <DeleteDialog
+          item={item}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={async () => {
+            await api.deleteItem(item.id);
+            onDeleted();
+          }}
+        />
+      )}
     </div>
   );
 }

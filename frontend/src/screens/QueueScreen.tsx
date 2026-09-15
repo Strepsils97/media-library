@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import { api } from "../api";
 import type { Job, Kind } from "../types";
@@ -43,8 +43,14 @@ function Progress({ job }: { job: Job }) {
 export function QueueScreen() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [paused, setPaused] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const load = () => api.jobs().then(setJobs).catch(() => undefined);
+  const load = () => {
+    api.jobs().then(setJobs).catch(() => undefined);
+    // Пауза — стан воркера, а не компонента: після переходу між екранами
+    // перемикач має показувати те, що насправді робить бекенд.
+    api.runtime().then((r) => setPaused(r.paused)).catch(() => undefined);
+  };
 
   useEffect(() => {
     load();
@@ -60,9 +66,21 @@ export function QueueScreen() {
   };
 
   const togglePause = async () => {
-    const next = !paused;
-    setPaused(next);
-    await fetch(`/api/jobs/pause?value=${next}`, { method: "POST" });
+    try {
+      const { paused: now } = await api.pauseJobs(!paused);
+      setPaused(now);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  const clearDone = async () => {
+    try {
+      await api.clearDoneJobs();
+      load();
+    } catch (e) {
+      setError((e as Error).message);
+    }
   };
 
   return (
@@ -72,14 +90,24 @@ export function QueueScreen() {
         <span className="tnum text-[11px] text-ink-faint">
           {counts.running} обробляються · {counts.queued} у черзі · {counts.failed}{" "}
           {counts.failed === 1 ? "помилка" : "помилки"} · {counts.done} готово
+          {paused && " · на паузі"}
         </span>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex items-center gap-2">
+          {error && <span className="text-[11px] text-error">{error}</span>}
           <button
             type="button"
             onClick={togglePause}
             className="rounded border border-line bg-surface px-2.5 py-1 text-[12px] text-ink-dim hover:border-line-2 hover:text-ink"
           >
             {paused ? "Продовжити" : "Пауза"}
+          </button>
+          <button
+            type="button"
+            onClick={clearDone}
+            disabled={counts.done === 0}
+            className="rounded border border-line bg-surface px-2.5 py-1 text-[12px] text-ink-dim hover:border-line-2 hover:text-ink disabled:opacity-40"
+          >
+            Прибрати готові
           </button>
         </div>
       </div>
@@ -103,8 +131,8 @@ export function QueueScreen() {
             </thead>
             <tbody>
               {jobs.map((job) => (
-                <>
-                  <tr key={job.id} className="border-t border-line align-middle">
+                <Fragment key={job.id}>
+                  <tr className="border-t border-line align-middle">
                     <td className="px-4 py-2.5">
                       <span className="tnum rounded-sm bg-surface-3 px-1 py-[1px] text-[9px] tracking-wider text-ink-faint">
                         {KIND_LABEL[job.kind] ?? "—"}
@@ -151,7 +179,7 @@ export function QueueScreen() {
                     </td>
                   </tr>
                   {job.error && (
-                    <tr key={`${job.id}-error`} className="bg-surface">
+                    <tr className="bg-surface">
                       <td />
                       <td colSpan={5} className="px-2 pb-3">
                         {/* Причина завжди явна текстом — ніяких кодів без пояснення. */}
@@ -161,7 +189,7 @@ export function QueueScreen() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

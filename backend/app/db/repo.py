@@ -266,6 +266,29 @@ def job_counts() -> dict[str, int]:
     return {row["status"]: int(row["n"]) for row in rows}
 
 
+def clear_done_jobs() -> int:
+    conn = get_connection()
+    cursor = conn.execute("DELETE FROM jobs WHERE status = 'done'")
+    conn.commit()
+    return cursor.rowcount
+
+
+def requeue_all() -> int:
+    """Створює задачу на повторну обробку для кожного запису."""
+    conn = get_connection()
+    rows = conn.execute("SELECT id, kind FROM items ORDER BY id").fetchall()
+    now = _now()
+    for row in rows:
+        conn.execute(
+            """INSERT INTO jobs (item_id, type, status, progress, created_at, updated_at)
+               VALUES (?, ?, 'queued', 0, ?, ?)""",
+            (row["id"], row["kind"], now, now),
+        )
+        conn.execute("UPDATE items SET status = 'pending' WHERE id = ?", (row["id"],))
+    conn.commit()
+    return len(rows)
+
+
 def reset_running_jobs() -> None:
     """Задачі, що лишилися 'running' після падіння, повертаються в чергу."""
     conn = get_connection()

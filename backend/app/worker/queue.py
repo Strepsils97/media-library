@@ -23,9 +23,25 @@ STAGE_LABELS = {
     "video": "Відбір кадрів → мовлення",
 }
 
+
+class JobCancelled(Exception):
+    """Користувач перервав задачу, поки вона виконувалася."""
+
+
 _thread: threading.Thread | None = None
 _stop = threading.Event()
 _paused = threading.Event()
+
+# Задачі, які попросили скасувати. Перервати розпізнавання посеред виклику
+# моделі не можна, тому перевіряємо прапорець між сегментами — у зворотному
+# виклику прогресу.
+_cancelled: set[int] = set()
+_cancel_lock = threading.Lock()
+
+
+def request_cancel(job_id: int) -> None:
+    with _cancel_lock:
+        _cancelled.add(job_id)
 
 
 def _run_job(job) -> None:
@@ -37,7 +53,18 @@ def _run_job(job) -> None:
     repo.update_item(item_id, status="processing")
 
     def on_progress(value: float) -> None:
+        with _cancel_lock:
+            if job_id in _cancelled:
+                _cancelled.discard(job_id)
+                raise JobCancelled
         repo.update_job(job_id, progress=max(0.0, min(1.0, value)))
+
+    with _cancel_lock:
+        if job_id in _cancelled:
+            _cancelled.discard(job_id)
+            repo.update_job(job_id, status="done", error="Скасовано користувачем")
+            repo.update_item(item_id, status="ready")
+            return
 
     try:
         processor = pipeline.PROCESSORS[kind]
@@ -45,6 +72,11 @@ def _run_job(job) -> None:
             processor(item_id, on_progress=on_progress)
         else:
             processor(item_id)
+    except JobCancelled:
+        repo.update_job(job_id, status="done", progress=0.0, error="Скасовано користувачем")
+        repo.update_item(item_id, status="ready")
+        log.info("Задачу %s скасовано", job_id)
+        return
     except NoAudioTrack:
         # Для відео кадри вже проіндексовані, тож запис придатний до пошуку.
         # Для аудіо шукати нема чого — але запис усе одно лишається в бібліотеці.

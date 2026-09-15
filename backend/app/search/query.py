@@ -15,6 +15,7 @@ from ..db import repo
 from ..ingest.text import snippet, word_count
 from ..ml.registry import get_image_embedder, get_text_embedder
 from . import calibration
+from .highlight import find_span
 
 log = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ def search(filters: Filters) -> dict:
         item = repo.get_item(item_id)
         if item is None:
             continue
-        hits.append(_build_hit(item, score, meta))
+        hits.append(_build_hit(item, score, meta, filters.query))
 
     return {
         "hits": hits,
@@ -135,7 +136,9 @@ def search(filters: Filters) -> dict:
     }
 
 
-def _build_hit(item: sqlite3.Row, score: float, meta: sqlite3.Row) -> dict:
+def _build_hit(
+    item: sqlite3.Row, score: float, meta: sqlite3.Row, query: str
+) -> dict:
     kind = item["kind"]
     thumb_url: str | None = None
 
@@ -150,6 +153,7 @@ def _build_hit(item: sqlite3.Row, score: float, meta: sqlite3.Row) -> dict:
 
     body = meta["chunk_text"] or item["transcript"] or item["text_content"] or ""
     text_snippet = snippet(body) if body else None
+    span = find_span(text_snippet, query) if text_snippet else None
 
     return {
         "item_id": item["id"],
@@ -160,7 +164,7 @@ def _build_hit(item: sqlite3.Row, score: float, meta: sqlite3.Row) -> dict:
         "tags": repo.tags_for_item(item["id"]),
         "thumb_url": thumb_url,
         "snippet": text_snippet,
-        "snippet_highlight": None,
+        "snippet_highlight": span,
         "duration_s": item["duration_s"],
         "match_ts_s": meta["ts_s"],
         "width": item["width"],

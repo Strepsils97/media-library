@@ -13,9 +13,11 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from . import settings_store
 from .api.routes import router
 from .config import get_settings
 from .db.connection import init_db
+from .version import APP_VERSION
 from .worker import queue
 
 log = logging.getLogger(__name__)
@@ -25,6 +27,7 @@ log = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     settings = get_settings()
     settings.ensure_dirs()
+    settings_store.load()
     init_db()
     queue.start()
 
@@ -32,7 +35,7 @@ async def lifespan(app: FastAPI):
     # секунд. Гріємо у фоні, щоб вікно відкрилося одразу.
     threading.Thread(target=_warm_up, name="warm-up", daemon=True).start()
 
-    log.info("Бібліотека готова: %s", settings.db_path)
+    log.info("media-library %s · бібліотека: %s", APP_VERSION, settings.db_path)
     yield
     queue.stop()
 
