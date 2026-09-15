@@ -29,6 +29,16 @@ from .highlight import find_span
 
 log = logging.getLogger(__name__)
 
+# Скільки кандидатів дораховувати точно в просторах, де їх не знайшов kNN.
+# Ті, хто не потрапив сюди, і так не піднімуться нагору, а читання векторів
+# коштує найдорожче в усьому пошуку.
+BACKFILL_LIMIT = 150
+
+# Скільки найкращих за змістом фрагментів додатково перевіряти на збіг фрази.
+# Потрібні саме ті, де ASR спотворив слово так, що повнотекстовий індекс його
+# не знайшов, — а такі майже завжди лежать у голові смислової видачі.
+PHRASE_EXTRA_LIMIT = 60
+
 
 @dataclass(slots=True)
 class Filters:
@@ -157,19 +167,31 @@ def _image_evidence(
     if not scores:
         return {}
 
-    # Добираємо те, чого бракує, точним обчисленням.
+    # Добираємо те, чого бракує, точним обчисленням — але лише для тих, хто
+    # реально бореться за верх видачі. Дораховувати кожного кандидата означало
+    # б читати тисячі векторів заради результатів, які все одно не піднімуться.
+    contenders = {
+        key
+        for key, _ in sorted(
+            scores.items(), key=lambda kv: -max(kv[1].values())
+        )[:BACKFILL_LIMIT]
+    }
+
     for space in IMAGE_SPACES:
-        missing = [key for key, got in scores.items() if space not in got]
+        missing = [
+            key for key in contenders if space not in scores[key]
+        ]
         if not missing:
             continue
 
         if space not in rowid_by_key:
             rowid_by_key[space] = {}
-            placeholders = ",".join("?" * len({k[0] for k in scores}))
+            wanted_items = {key[0] for key in contenders}
+            placeholders = ",".join("?" * len(wanted_items))
             rows = conn.execute(
                 "SELECT item_id, frame_id, vec_rowid FROM embeddings "  # noqa: S608
                 f"WHERE space = ? AND item_id IN ({placeholders})",
-                (space, *{k[0] for k in scores}),
+                (space, *wanted_items),
             ).fetchall()
             for row in rows:
                 rowid_by_key[space][(int(row["item_id"]), row["frame_id"])] = int(
@@ -217,16 +239,18 @@ def _text_evidence(
     cal = calibration.get(TEXT_SPACE)
 
     best: dict[int, Evidence] = {}
+    ordered: list[int] = []
     for row in rows:
         meta = metas.get(int(row["rowid"]))
         if meta is None:
             continue
+        ordered.append(int(meta["id"]))
         score = calibration.to_score(_cosine(float(row["distance"])), cal)
         item_id = int(meta["item_id"])
         if item_id not in best or score > best[item_id].score:
             best[item_id] = Evidence(score, "text", meta)
 
-    return best, {int(meta["id"]) for meta in metas.values()}
+    return best, set(ordered[:PHRASE_EXTRA_LIMIT])
 
 
 def search(filters: Filters) -> dict:

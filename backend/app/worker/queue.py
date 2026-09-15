@@ -28,6 +28,16 @@ class JobCancelled(Exception):
     """Користувач перервав задачу, поки вона виконувалася."""
 
 
+def _is_out_of_memory(exc: BaseException) -> bool:
+    """Чи це брак пам'яті відеокарти.
+
+    Перевіряємо за текстом, а не за типом: OOM прилітає то з torch, то з
+    CTranslate2, і спільного класу винятку в них немає.
+    """
+    text = str(exc).lower()
+    return "out of memory" in text or "cuda error" in text and "memory" in text
+
+
 _thread: threading.Thread | None = None
 _stop = threading.Event()
 _paused = threading.Event()
@@ -91,7 +101,28 @@ def _run_job(job) -> None:
         return
     except Exception as exc:  # noqa: BLE001 — будь-який збій має лишитися видимим
         log.exception("Задача %s впала", job_id)
-        repo.update_job(job_id, status="failed", error=str(exc))
+
+        if _is_out_of_memory(exc):
+            # Чотири моделі на 8 ГБ лишають близько двох гігабайтів запасу.
+            # Варто комусь поруч зайняти відеопам'ять — і обробка падає з
+            # повідомленням, з якого нічого не зрозуміло. Пояснюємо просто й
+            # кажемо, що робити.
+            message = (
+                "Забракло пам'яті відеокарти. Закрийте важкі застосунки "
+                "(ігри, редактори відео) і повторіть, або перемкніть обробку "
+                "на процесор у налаштуваннях — буде повільніше, але надійно."
+            )
+            # Моделі лишилися в пам'яті у невідомому стані — знімаємо їх,
+            # щоб наступна спроба почала з чистого аркуша.
+            from ..ml import asr as asr_module
+            from ..ml.registry import reset
+
+            reset()
+            asr_module.unload()
+        else:
+            message = str(exc)
+
+        repo.update_job(job_id, status="failed", error=message)
         repo.update_item(item_id, status="failed")
         return
 

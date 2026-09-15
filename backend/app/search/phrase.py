@@ -23,8 +23,11 @@ from difflib import SequenceMatcher
 # Нижче цього збіг вважається випадковим і не враховується.
 THRESHOLD = 0.72
 
-# Скільки кандидатів брати з повнотекстового індексу перед нечітким зіставленням.
-FTS_LIMIT = 400
+# Скільки кандидатів брати з повнотекстового індексу перед нечітким
+# зіставленням. Беруться найдоречніші за bm25, а не перші-ліпші: на
+# бібліотеці, де запитані слова трапляються всюди, довільна вибірка змушувала
+# б точно переміряти сотні свідомо слабких фрагментів.
+FTS_LIMIT = 200
 
 # Літери, які в українській і російській пишуться по-різному, а звучать
 # однаково. Розпізнавання плутає їх постійно, а для пошуку фрази ця різниця
@@ -49,33 +52,85 @@ def fold(text: str) -> str:
     return _SPACES.sub(" ", _PUNCT.sub(" ", text)).strip()
 
 
-def similarity(haystack: str, needle: str) -> float:
-    """Найкраща схожість фрази з будь-яким вікном тексту.
+# Порівнювати кожне вікно фрагмента окремо надто дорого: на бібліотеці в
+# 5000 записів це давало 6-10 секунд на запит. Натомість фраза один раз
+# зіставляється з фрагментом цілком, а тоді точно переміряються лише ті
+# кілька місць, де збіги згустилися.
 
-    Порівнюються вікна завдовжки як сама фраза плюс-мінус кілька слів: ASR
-    любить втрачати або додавати службові слова, і жорстка довжина вікна
-    відкидала б саме ті збіги, заради яких це все й робиться.
+# Частка триграм запиту, яка має знайтися у фрагменті, щоб узагалі рахувати
+# далі. Поріг із запасом: збіг на 0.72 означає, що більшість символів фрази
+# присутня в тексті по порядку, тож спільних триграм у нього завідомо більше.
+_MIN_TRIGRAM_OVERLAP = 0.34
+
+# Скільки найбільших збігів перевіряти точно.
+_MAX_PROBES = 8
+
+# Ширини вікна відносно довжини фрази. Кілька, бо ASR то втрачає службові
+# слова, то додає свої; одна фіксована ширина відкидала б саме такі збіги.
+# Пропорційні, а не з фіксованим запасом: для короткого запиту зайві символи
+# у вікні коштують більше, ніж для довгого.
+_WINDOW_RATIOS = (0.85, 1.0, 1.2)
+
+# Довші фрагменти не трапляються: текст ріжеться на шматки при індексуванні.
+_MAX_CHARS = 4000
+
+
+def _trigrams(text: str) -> set[str]:
+    return {text[i : i + 3] for i in range(len(text) - 2)} or {text}
+
+
+def _overlap(query_grams: set[str], text: str) -> float:
+    """Яка частка триграм запиту взагалі є в тексті."""
+    if not query_grams:
+        return 0.0
+    return len(query_grams & _trigrams(text)) / len(query_grams)
+
+
+def similarity(haystack: str, needle: str) -> float:
+    """Найкраща схожість фрази з будь-яким місцем тексту.
+
+    Вікно береться трохи ширшим за саму фразу: ASR любить втрачати або
+    додавати службові слова, і жорстка довжина відкидала б саме ті збіги,
+    заради яких це все й робиться.
     """
-    words = fold(haystack).split()
+    folded = fold(haystack)[:_MAX_CHARS]
     target = fold(needle)
-    target_words = target.split()
-    if not words or not target_words:
+    if not folded or not target:
         return 0.0
 
-    width = len(target_words)
-    matcher = SequenceMatcher(None, b=target, autojunk=False)
-    best = 0.0
+    if _overlap(_trigrams(target), folded) < _MIN_TRIGRAM_OVERLAP:
+        return 0.0
 
-    for size in sorted({max(1, width - 1), width, width + 1, width + 2}):
-        if size > len(words):
-            # Текст коротший за вікно — порівнюємо його цілком.
-            matcher.set_seq1(" ".join(words))
-            best = max(best, matcher.ratio())
-            continue
-        for start in range(len(words) - size + 1):
-            matcher.set_seq1(" ".join(words[start : start + size]))
-            # real_quick_ratio дешевий і відсікає безнадійні вікна до
-            # повного порівняння — інакше довгі транскрипції коштували б дорого.
+    widths = sorted({max(2, int(len(target) * r)) for r in _WINDOW_RATIOS})
+
+    # Короткий фрагмент порівнюємо цілком — ділити нема чого.
+    if len(folded) <= max(widths):
+        return SequenceMatcher(None, target, folded, autojunk=False).ratio()
+
+    # Один прохід по всьому фрагменту показує, де збіги взагалі є.
+    blocks = [
+        block
+        for block in SequenceMatcher(
+            None, target, folded, autojunk=False
+        ).get_matching_blocks()
+        if block.size >= 2
+    ]
+    if not blocks:
+        return 0.0
+
+    best = 0.0
+    seen: set[tuple[int, int]] = set()
+    matcher = SequenceMatcher(None, b=target, autojunk=False)
+
+    for block in sorted(blocks, key=lambda b: -b.size)[:_MAX_PROBES]:
+        for width in widths:
+            # Ставимо вікно так, щоб знайдений збіг опинився в ньому на тому
+            # ж місці, що й у самій фразі.
+            start = max(0, min(block.b - block.a, len(folded) - width))
+            if (start, width) in seen:
+                continue
+            seen.add((start, width))
+            matcher.set_seq1(folded[start : start + width])
             if matcher.real_quick_ratio() <= best or matcher.quick_ratio() <= best:
                 continue
             best = max(best, matcher.ratio())
@@ -147,6 +202,7 @@ def _fts_candidates(conn: sqlite3.Connection, query: str) -> list[sqlite3.Row]:
                FROM chunk_fts f
                JOIN embeddings e ON e.id = f.rowid
                WHERE chunk_fts MATCH ?
+               ORDER BY rank
                LIMIT ?""",
             (fts, FTS_LIMIT),
         ).fetchall()
