@@ -1,8 +1,11 @@
 """Реєстр моделей: лінива загрузка й єдиний інтерфейс до ембедерів.
 
-Конкретні реалізації (ONNX Runtime) з'являться після того, як Фаза 0 обере
-моделі. До того працює детермінована заглушка, щоб решта пайплайна —
-інжест, пошук, злиття оцінок — будувалася й тестувалася вже зараз.
+Зображення кодує ансамбль із двох моделей, тому його методи повертають
+словник «простір -> вектори». Решта коду завдяки цьому не знає, скільки
+саме моделей стоїть за зображеннями, і додавання третьої нічого не зламає.
+
+Для тестів реєстр підмінюється детермінованими заглушками: вантажити
+гігабайти ваг заради перевірки логіки пошуку немає сенсу.
 """
 
 from __future__ import annotations
@@ -22,12 +25,12 @@ log = logging.getLogger(__name__)
 
 @runtime_checkable
 class ImageEmbedder(Protocol):
-    """Зображення та текст запиту в одному просторі (крос-модальний пошук)."""
+    """Зображення та текст запиту в спільних просторах (крос-модальний пошук)."""
 
-    dim: int
+    dims: dict[str, int]
 
-    def encode_images(self, images: list[Image]) -> np.ndarray: ...
-    def encode_queries(self, texts: list[str]) -> np.ndarray: ...
+    def encode_images(self, images: list[Image]) -> dict[str, np.ndarray]: ...
+    def encode_queries(self, texts: list[str]) -> dict[str, np.ndarray]: ...
 
 
 @runtime_checkable
@@ -71,15 +74,35 @@ class _DeterministicStub:
         rng = np.random.default_rng(int.from_bytes(digest[:8], "little"))
         return rng.standard_normal(self.dim, dtype=np.float32)
 
-    def encode_images(self, images: list[Image]) -> np.ndarray:
-        payloads = [img.resize((16, 16)).convert("RGB").tobytes() for img in images]
-        return normalize(np.stack([self._vector(p) for p in payloads]))
+    def encode_texts(self, texts: list[str]) -> np.ndarray:
+        return normalize(np.stack([self._vector(t.encode("utf-8")) for t in texts]))
 
     def encode_queries(self, texts: list[str]) -> np.ndarray:
         return self.encode_texts(texts)
 
-    def encode_texts(self, texts: list[str]) -> np.ndarray:
-        return normalize(np.stack([self._vector(t.encode("utf-8")) for t in texts]))
+
+class _ImageStub:
+    """Заглушка ансамблю: той самий словник просторів, але без ваг."""
+
+    def __init__(self, dims: dict[str, int]) -> None:
+        self.dims = dims
+        self._members = {
+            space: _DeterministicStub(dim, salt=space) for space, dim in dims.items()
+        }
+
+    @property
+    def device(self) -> str:
+        return "cpu"
+
+    def encode_images(self, images: list[Image]) -> dict[str, np.ndarray]:
+        payloads = [img.resize((16, 16)).convert("RGB").tobytes() for img in images]
+        return {
+            space: normalize(np.stack([member._vector(p) for p in payloads]))
+            for space, member in self._members.items()
+        }
+
+    def encode_queries(self, texts: list[str]) -> dict[str, np.ndarray]:
+        return {space: member.encode_texts(texts) for space, member in self._members.items()}
 
 
 _lock = threading.Lock()
@@ -89,11 +112,11 @@ _text_embedder: TextEmbedder | None = None
 
 def use_stubs() -> None:
     """Перемкнути реєстр на заглушки — тести не мають вантажити гігабайти ваг."""
-    from ..db.connection import IMAGE_DIM, TEXT_DIM
+    from ..db.connection import IMAGE_SPACES, SPACES, TEXT_SPACE
 
     set_embedders(
-        image=_DeterministicStub(IMAGE_DIM, salt="image"),
-        text=_DeterministicStub(TEXT_DIM, salt="text"),
+        image=_ImageStub({space: SPACES[space] for space in IMAGE_SPACES}),
+        text=_DeterministicStub(SPACES[TEXT_SPACE], salt=TEXT_SPACE),
     )
 
 
@@ -101,9 +124,9 @@ def get_image_embedder() -> ImageEmbedder:
     global _image_embedder
     with _lock:
         if _image_embedder is None:
-            from .embedders import SiglipEmbedder
+            from .embedders import ImageEnsemble
 
-            _image_embedder = SiglipEmbedder()
+            _image_embedder = ImageEnsemble()
         return _image_embedder
 
 

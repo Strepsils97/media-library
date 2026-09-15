@@ -96,7 +96,12 @@ def main() -> None:
         "ffmpeg": INTERNAL / "ffmpeg.exe",
         "CUDA": INTERNAL / "cuda" / "cublas64_12.dll",
         "SigLIP": target / "local" / "siglip" / "config.json",
+        "NLLB-CLIP": target / "local" / "nllbclip" / "open_clip_pytorch_model.bin",
+        # Токенізатор NLLB тягнеться окремо від ваг, і без нього друга
+        # візуальна модель у офлайновій збірці просто не стартує.
+        "токенізатор NLLB": target / "models--facebook--nllb-200-distilled-600M",
         "E5": target / "local" / "e5" / "config.json",
+        "ASR": target / "models--mobiuslabsgmbh--faster-whisper-large-v3-turbo",
     }
     missing = [name for name, path in checks.items() if not path.exists()]
     for name, path in checks.items():

@@ -1,20 +1,30 @@
-"""Пошук: kNN у двох просторах, фільтри, нормалізація та злиття оцінок."""
+"""Пошук: три векторні простори, нечіткий пошук фрази, злиття оцінок.
+
+Запис може знайтися трьома різними шляхами, і кожен із них має власну шкалу:
+
+* **зображення** — дві моделі незалежно оцінюють кадр або картинку;
+* **текст** — смисловий збіг із транскрипцією чи нотаткою;
+* **фраза** — лексичний збіг із допуском на помилки розпізнавання.
+
+Щоб їх можна було порівнювати, кожна шкала зводиться до однієї спільної
+(див. calibration.py): оцінка означає «наскільки цей збіг незвичний для свого
+простору», а не сирий косинус, у якого в кожної моделі свій діапазон.
+"""
 
 from __future__ import annotations
 
 import logging
 import sqlite3
 import time
+from collections import defaultdict
 from dataclasses import dataclass, field
 
-import numpy as np
-
 from ..config import get_settings
-from ..db.connection import get_connection, knn
 from ..db import repo
+from ..db.connection import IMAGE_SPACES, TEXT_SPACE, get_connection, knn, similarities
 from ..ingest.text import snippet, word_count
 from ..ml.registry import get_image_embedder, get_text_embedder
-from . import calibration
+from . import calibration, phrase
 from .highlight import find_span
 
 log = logging.getLogger(__name__)
@@ -27,6 +37,16 @@ class Filters:
     tags: list[str] = field(default_factory=list)
     date_from: str | None = None
     date_to: str | None = None
+
+
+@dataclass(slots=True)
+class Evidence:
+    """Чим саме запис заслужив своє місце у видачі."""
+
+    score: float
+    source: str  # image | text | phrase
+    meta: sqlite3.Row | None = None
+    phrase_ratio: float | None = None
 
 
 def _filtered_item_ids(conn: sqlite3.Connection, filters: Filters) -> set[int] | None:
@@ -75,6 +95,140 @@ def _vec_rowids_for_items(
     return [int(row["vec_rowid"]) for row in rows]
 
 
+def _meta_by_rowid(
+    conn: sqlite3.Connection, space: str, vec_rowids: list[int]
+) -> dict[int, sqlite3.Row]:
+    result: dict[int, sqlite3.Row] = {}
+    for start in range(0, len(vec_rowids), 400):
+        chunk = vec_rowids[start : start + 400]
+        rows = conn.execute(
+            "SELECT * FROM embeddings WHERE space = ? "  # noqa: S608
+            f"AND vec_rowid IN ({','.join('?' * len(chunk))})",
+            (space, *chunk),
+        ).fetchall()
+        for row in rows:
+            result[int(row["vec_rowid"])] = row
+    return result
+
+
+def _cosine(distance: float) -> float:
+    """Вектори нормовані, тож cos = 1 − d²/2."""
+    return 1.0 - (distance * distance) / 2.0
+
+
+def _image_evidence(
+    conn: sqlite3.Connection,
+    queries: dict[str, list[float]],
+    allowed: set[int] | None,
+    limit: int,
+) -> dict[int, Evidence]:
+    """Оцінка зображень як спільна думка всіх візуальних моделей.
+
+    Кадр, який потрапив у видачу однієї моделі, але не втрапив у межі kNN
+    іншої, не викидається: його схожість у другому просторі дораховується
+    точно. Інакше кандидат, знайдений лише однією моделлю, мав би штучно
+    занижене середнє й програвав би тим, кого знайшли обидві.
+    """
+    # (item_id, frame_id) -> {space: cos}
+    scores: dict[tuple[int, int | None], dict[str, float]] = defaultdict(dict)
+    # (item_id, frame_id) -> рядок embeddings (для кадру й моменту)
+    meta_by_key: dict[tuple[int, int | None], sqlite3.Row] = {}
+    # space -> {(item_id, frame_id): vec_rowid}
+    rowid_by_key: dict[str, dict[tuple[int, int | None], int]] = {}
+
+    for space in IMAGE_SPACES:
+        restrict = _vec_rowids_for_items(conn, space, allowed)
+        if restrict is not None and not restrict:
+            continue
+
+        rows = knn(conn, space, queries[space], limit, restrict)
+        if not rows:
+            continue
+
+        metas = _meta_by_rowid(conn, space, [int(r["rowid"]) for r in rows])
+        for row in rows:
+            meta = metas.get(int(row["rowid"]))
+            if meta is None:
+                continue
+            key = (int(meta["item_id"]), meta["frame_id"])
+            scores[key][space] = _cosine(float(row["distance"]))
+            meta_by_key.setdefault(key, meta)
+
+    if not scores:
+        return {}
+
+    # Добираємо те, чого бракує, точним обчисленням.
+    for space in IMAGE_SPACES:
+        missing = [key for key, got in scores.items() if space not in got]
+        if not missing:
+            continue
+
+        if space not in rowid_by_key:
+            rowid_by_key[space] = {}
+            placeholders = ",".join("?" * len({k[0] for k in scores}))
+            rows = conn.execute(
+                "SELECT item_id, frame_id, vec_rowid FROM embeddings "  # noqa: S608
+                f"WHERE space = ? AND item_id IN ({placeholders})",
+                (space, *{k[0] for k in scores}),
+            ).fetchall()
+            for row in rows:
+                rowid_by_key[space][(int(row["item_id"]), row["frame_id"])] = int(
+                    row["vec_rowid"]
+                )
+
+        wanted = {key: rowid_by_key[space][key] for key in missing if key in rowid_by_key[space]}
+        if not wanted:
+            continue
+        exact = similarities(conn, space, queries[space], wanted.values())
+        for key, vec_rowid in wanted.items():
+            if vec_rowid in exact:
+                scores[key][space] = exact[vec_rowid]
+
+    calibrations = {space: calibration.get(space) for space in IMAGE_SPACES}
+
+    best: dict[int, Evidence] = {}
+    for key, per_space in scores.items():
+        values = [
+            calibration.to_score(cos, calibrations[space])
+            for space, cos in per_space.items()
+        ]
+        score = sum(values) / len(values)
+        item_id = key[0]
+        if item_id not in best or score > best[item_id].score:
+            best[item_id] = Evidence(score, "image", meta_by_key[key])
+
+    return best
+
+
+def _text_evidence(
+    conn: sqlite3.Connection, query: list[float], allowed: set[int] | None, limit: int
+) -> tuple[dict[int, Evidence], set[int]]:
+    """Смисловий збіг із текстами. Другим значенням — які фрагменти дивилися:
+    вони ж потім ідуть у фразовий прохід як додаткові кандидати."""
+    restrict = _vec_rowids_for_items(conn, TEXT_SPACE, allowed)
+    if restrict is not None and not restrict:
+        return {}, set()
+
+    rows = knn(conn, TEXT_SPACE, query, limit, restrict)
+    if not rows:
+        return {}, set()
+
+    metas = _meta_by_rowid(conn, TEXT_SPACE, [int(r["rowid"]) for r in rows])
+    cal = calibration.get(TEXT_SPACE)
+
+    best: dict[int, Evidence] = {}
+    for row in rows:
+        meta = metas.get(int(row["rowid"]))
+        if meta is None:
+            continue
+        score = calibration.to_score(_cosine(float(row["distance"])), cal)
+        item_id = int(meta["item_id"])
+        if item_id not in best or score > best[item_id].score:
+            best[item_id] = Evidence(score, "text", meta)
+
+    return best, {int(meta["id"]) for meta in metas.values()}
+
+
 def search(filters: Filters) -> dict:
     started = time.perf_counter()
     settings = get_settings()
@@ -85,48 +239,42 @@ def search(filters: Filters) -> dict:
         return {"hits": [], "total": 0, "took_ms": 0, "total_unfiltered": total_unfiltered}
 
     allowed = _filtered_item_ids(conn, filters)
+    limit = settings.knn_candidates
 
-    # Запит кодується двічі — під кожен простір своїм енкодером.
-    image_query = get_image_embedder().encode_queries([filters.query])[0]
-    text_query = get_text_embedder().encode_queries([filters.query])[0]
+    # Запит кодується кожним енкодером окремо — простори різні.
+    image_queries = {
+        space: vectors[0].tolist()
+        for space, vectors in get_image_embedder().encode_queries([filters.query]).items()
+    }
+    text_query = get_text_embedder().encode_queries([filters.query])[0].tolist()
 
-    # item_id -> (оцінка, рядок embeddings)
-    best: dict[int, tuple[float, sqlite3.Row]] = {}
+    evidence: dict[int, Evidence] = {}
 
-    for space, vector in (("image", image_query), ("text", text_query)):
-        restrict = _vec_rowids_for_items(conn, space, allowed)
-        if restrict is not None and not restrict:
-            continue
+    def offer(item_id: int, candidate: Evidence) -> None:
+        # Запис лишається у видачі один раз — за найсильнішим зі своїх збігів.
+        # Відео, знайдене і кадром, і транскрипцією, не має дублюватися.
+        current = evidence.get(item_id)
+        if current is None or candidate.score > current.score:
+            evidence[item_id] = candidate
 
-        rows = knn(conn, space, vector.tolist(), settings.knn_candidates, restrict)
-        if not rows:
-            continue
+    for item_id, found in _image_evidence(conn, image_queries, allowed, limit).items():
+        offer(item_id, found)
+    text_found, text_chunks = _text_evidence(conn, text_query, allowed, limit)
+    for item_id, found in text_found.items():
+        offer(item_id, found)
 
-        # Вектори нормовані, тож cos = 1 - d²/2.
-        cal = calibration.get(space)
-        scores = [
-            calibration.to_score(1.0 - (float(row["distance"]) ** 2) / 2.0, cal)
-            for row in rows
-        ]
-        for row, score in zip(rows, scores, strict=True):
-            meta = conn.execute(
-                "SELECT * FROM embeddings WHERE space = ? AND vec_rowid = ?",
-                (space, int(row["rowid"])),
-            ).fetchone()
-            if meta is None:
-                continue
-            item_id = int(meta["item_id"])
-            # Відео, що збіглося і кадром, і транскрибцією, не має з'являтися
-            # двічі — лишаємо найкращий збіг по запису.
-            if item_id not in best or score > best[item_id][0]:
-                best[item_id] = (score, meta)
+    words = phrase.word_count(filters.query)
+    for item_id, (ratio, row) in phrase.find(
+        conn, filters.query, allowed, text_chunks
+    ).items():
+        offer(item_id, Evidence(phrase.to_score(ratio, words), "phrase", row, ratio))
 
     hits = []
-    for item_id, (score, meta) in sorted(best.items(), key=lambda kv: -kv[1][0]):
+    for item_id, found in sorted(evidence.items(), key=lambda kv: -kv[1].score):
         item = repo.get_item(item_id)
         if item is None:
             continue
-        hits.append(_build_hit(item, score, meta, filters.query))
+        hits.append(_build_hit(item, found, filters.query))
 
     return {
         "hits": hits,
@@ -136,22 +284,45 @@ def search(filters: Filters) -> dict:
     }
 
 
-def _build_hit(
-    item: sqlite3.Row, score: float, meta: sqlite3.Row, query: str
-) -> dict:
+def _pick_frame(frames: list[sqlite3.Row], meta: sqlite3.Row | None) -> sqlite3.Row:
+    """Кадр, який найкраще пояснює збіг.
+
+    Збіг по кадру вказує на конкретний кадр. Збіг по транскрипції чи фразі
+    кадру не має, але має момент — тоді беремо найближчий до нього кадр:
+    показувати перший-ліпший, коли відомо, на якій хвилині прозвучала фраза,
+    було б просто неправдою про результат.
+    """
+    if meta is None:
+        return frames[0]
+
+    if meta["frame_id"] is not None:
+        return next((f for f in frames if f["id"] == meta["frame_id"]), frames[0])
+
+    ts = meta["ts_s"]
+    if ts is None:
+        return frames[0]
+    return min(frames, key=lambda f: abs(float(f["ts_s"]) - float(ts)))
+
+
+def _build_hit(item: sqlite3.Row, found: Evidence, query: str) -> dict:
     kind = item["kind"]
+    meta = found.meta
     thumb_url: str | None = None
 
     if kind == "image":
         thumb_url = f"/api/media/thumb/{item['id']}"
     elif kind == "video":
-        frame_id = meta["frame_id"]
         frames = repo.list_frames(item["id"])
         if frames:
-            chosen = next((f for f in frames if f["id"] == frame_id), frames[0])
+            chosen = _pick_frame(frames, meta)
             thumb_url = f"/api/media/frame/{chosen['id']}"
 
-    body = meta["chunk_text"] or item["transcript"] or item["text_content"] or ""
+    body = ""
+    if meta is not None and meta["chunk_text"]:
+        body = meta["chunk_text"]
+    else:
+        body = item["transcript"] or item["text_content"] or ""
+
     text_snippet = snippet(body) if body else None
     span = find_span(text_snippet, query) if text_snippet else None
 
@@ -159,14 +330,16 @@ def _build_hit(
         "item_id": item["id"],
         "kind": kind,
         "label": item["label"],
-        "score": round(score, 1),
+        "score": round(found.score, 1),
+        "source": found.source,
+        "phrase_ratio": round(found.phrase_ratio, 2) if found.phrase_ratio else None,
         "created_at": item["created_at"],
         "tags": repo.tags_for_item(item["id"]),
         "thumb_url": thumb_url,
         "snippet": text_snippet,
         "snippet_highlight": span,
         "duration_s": item["duration_s"],
-        "match_ts_s": meta["ts_s"],
+        "match_ts_s": meta["ts_s"] if meta is not None else None,
         "width": item["width"],
         "height": item["height"],
         "word_count": word_count(item["text_content"]) if item["text_content"] else None,

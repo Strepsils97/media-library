@@ -66,7 +66,7 @@ CREATE INDEX IF NOT EXISTS idx_frames_item ON frames(item_id);
 CREATE TABLE IF NOT EXISTS embeddings (
     id         INTEGER PRIMARY KEY,
     item_id    INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-    space      TEXT    NOT NULL CHECK (space IN ('image', 'text')),
+    space      TEXT    NOT NULL CHECK (space IN ('image_a', 'image_b', 'text')),
     frame_id   INTEGER REFERENCES frames(id) ON DELETE CASCADE,
     chunk_ix   INTEGER,                -- порядковий номер фрагмента для довгих текстів
     chunk_text TEXT,                   -- сам фрагмент, щоб підсвітити його у видачі
@@ -76,6 +76,15 @@ CREATE TABLE IF NOT EXISTS embeddings (
 
 CREATE INDEX IF NOT EXISTS idx_emb_item      ON embeddings(item_id);
 CREATE INDEX IF NOT EXISTS idx_emb_space_row ON embeddings(space, vec_rowid);
+
+-- Повнотекстовий індекс над фрагментами транскрипцій і текстів.
+-- Векторний пошук знаходить сенс, але не вміє знайти конкретну фразу,
+-- надто якщо розпізнавання її трохи спотворило. FTS дає швидкий відбір
+-- кандидатів, які далі переоцінюються нечітким зіставленням.
+CREATE VIRTUAL TABLE IF NOT EXISTS chunk_fts USING fts5(
+    chunk_text,
+    tokenize = "unicode61 remove_diacritics 2"
+);
 
 CREATE TABLE IF NOT EXISTS jobs (
     id         INTEGER PRIMARY KEY,

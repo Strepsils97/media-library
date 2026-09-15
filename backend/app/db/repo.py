@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 
 from ..ingest.storage import Prepared
-from .connection import get_connection, serialize
+from .connection import SPACES, TEXT_SPACE, get_connection, serialize, vec_table
 
 
 def _now() -> str:
@@ -72,13 +72,15 @@ def delete_item(item_id: int) -> sqlite3.Row | None:
     if item is None:
         return None
 
-    for space, table in (("image", "vec_image"), ("text", "vec_text")):
+    for space in SPACES:
         rows = conn.execute(
-            "SELECT vec_rowid FROM embeddings WHERE item_id = ? AND space = ?",
+            "SELECT id, vec_rowid FROM embeddings WHERE item_id = ? AND space = ?",
             (item_id, space),
         ).fetchall()
+        table = vec_table(space)
         for row in rows:
             conn.execute(f"DELETE FROM {table} WHERE rowid = ?", (row["vec_rowid"],))  # noqa: S608
+            conn.execute("DELETE FROM chunk_fts WHERE rowid = ?", (row["id"],))
 
     conn.execute("DELETE FROM items WHERE id = ?", (item_id,))
     conn.commit()
@@ -117,13 +119,15 @@ def add_frame(item_id: int, ts_s: float, path: str) -> int:
 
 def clear_embeddings(item_id: int, space: str) -> None:
     conn = get_connection()
-    table = {"image": "vec_image", "text": "vec_text"}[space]
+    table = vec_table(space)
     rows = conn.execute(
-        "SELECT vec_rowid FROM embeddings WHERE item_id = ? AND space = ?",
+        "SELECT id, vec_rowid FROM embeddings WHERE item_id = ? AND space = ?",
         (item_id, space),
     ).fetchall()
     for row in rows:
         conn.execute(f"DELETE FROM {table} WHERE rowid = ?", (row["vec_rowid"],))  # noqa: S608
+        # Повнотекстовий індекс живе окремою таблицею й каскадів не знає.
+        conn.execute("DELETE FROM chunk_fts WHERE rowid = ?", (row["id"],))
     conn.execute(
         "DELETE FROM embeddings WHERE item_id = ? AND space = ?", (item_id, space)
     )
@@ -141,18 +145,28 @@ def add_embedding(
     ts_s: float | None = None,
 ) -> int:
     conn = get_connection()
-    table = {"image": "vec_image", "text": "vec_text"}[space]
+    table = vec_table(space)
     cursor = conn.execute(
-        f"INSERT INTO {table}(embedding) VALUES (?)",  # noqa: S608 — білий список вище
+        f"INSERT INTO {table}(embedding) VALUES (?)",  # noqa: S608 — назва з білого списку
         (serialize(np.asarray(vector, dtype=np.float32).ravel().tolist()),),
     )
     vec_rowid = int(cursor.lastrowid)
-    conn.execute(
+    cursor = conn.execute(
         """INSERT INTO embeddings (item_id, space, frame_id, chunk_ix, chunk_text,
                                    ts_s, vec_rowid)
            VALUES (?, ?, ?, ?, ?, ?, ?)""",
         (item_id, space, frame_id, chunk_ix, chunk_text, ts_s, vec_rowid),
     )
+    embedding_id = int(cursor.lastrowid)
+
+    # Той самий фрагмент потрапляє і в повнотекстовий індекс — щоб пошук умів
+    # знаходити конкретну фразу, а не лише схожий за змістом запис.
+    if space == TEXT_SPACE and chunk_text:
+        conn.execute(
+            "INSERT INTO chunk_fts(rowid, chunk_text) VALUES (?, ?)",
+            (embedding_id, chunk_text),
+        )
+
     conn.commit()
     return vec_rowid
 

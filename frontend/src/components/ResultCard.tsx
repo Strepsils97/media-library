@@ -161,6 +161,20 @@ export function ResultCard({ hit, onOpen }: Props) {
         <span className="tnum absolute top-1.5 right-1.5 rounded bg-black/65 px-1 py-0.5 text-[9px] tracking-wider text-ink-dim">
           {KIND_LABEL[hit.kind]}
         </span>
+        {/* Дослівний збіг знайдено інакше, ніж смисловий, і людині корисно
+            бачити різницю: тут збіглися саме слова, а не приблизний зміст. */}
+        {hit.source === "phrase" && (
+          <span
+            className="tnum absolute top-1.5 left-1.5 rounded bg-accent px-1 py-0.5 text-[9px] font-semibold tracking-wider text-ground"
+            title={
+              hit.phrase_ratio !== null && hit.phrase_ratio > 0.97
+                ? "Дослівний збіг фрази"
+                : `Фраза збіглася приблизно (${Math.round((hit.phrase_ratio ?? 0) * 100)}%)`
+            }
+          >
+            ФРАЗА
+          </span>
+        )}
       </div>
 
       <div className="flex gap-2 p-2.5">

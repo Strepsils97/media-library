@@ -26,7 +26,7 @@ from datetime import UTC, datetime
 log = logging.getLogger(__name__)
 
 # Підвищується разом із додаванням міграції нижче.
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,12 +36,42 @@ class Migration:
     apply: Callable[[sqlite3.Connection], None]
 
 
+def _to_two_image_models(conn: sqlite3.Connection) -> None:
+    """Версія 1 кодувала зображення однією моделлю, версія 2 — двома.
+
+    Простір «image» більше не існує: замість нього image_a (siglip2-so400m)
+    та image_b (nllb-clip-base-siglip). Старі вектори в нових просторах не
+    мають сенсу, тож вони видаляються, а записи стають у чергу на переобробку.
+    Файли, теги й виправлені транскрипції при цьому не чіпаються.
+
+    Заразом наповнюється повнотекстовий індекс: у версії 1 його не було, а
+    текстові вектори вже є — переобробка їх не змінить, тож індексуємо одразу.
+    """
+    conn.execute("DROP TABLE IF EXISTS vec_image")
+    _forget_chunks(conn, "image")
+    conn.execute("DELETE FROM embeddings WHERE space = 'image'")
+    conn.execute("DELETE FROM score_calibration WHERE space = 'image'")
+    conn.execute("DELETE FROM meta WHERE key = 'image_dim'")
+
+    rows = conn.execute(
+        "SELECT id, chunk_text FROM embeddings "
+        "WHERE space = 'text' AND chunk_text IS NOT NULL"
+    ).fetchall()
+    for row in rows:
+        conn.execute(
+            "INSERT INTO chunk_fts(rowid, chunk_text) VALUES (?, ?)",
+            (row["id"], row["chunk_text"]),
+        )
+    log.info("У повнотекстовий індекс додано фрагментів: %d", len(rows))
+
+    _requeue_all(conn)
+
+
 MIGRATIONS: list[Migration] = [
     # Версія 1 — початкова схема (див. schema.sql). Окремого кроку не
     # потребує: бази цієї версії створюються зі schema.sql як є.
-    #
-    # Наступні зміни додаються сюди, наприклад:
-    # Migration(2, "додано поле items.rating", _add_rating),
+    Migration(2, "дві моделі для зображень + повнотекстовий індекс",
+              _to_two_image_models),
 ]
 
 
@@ -108,25 +138,22 @@ def run(conn: sqlite3.Connection) -> int:
     return current
 
 
-def rebuild_vector_space(
-    conn: sqlite3.Connection, space: str, dim: int, reason: str
-) -> int:
-    """Перестворює векторну таблицю під нову розмірність і ставить записи в чергу.
+def _forget_chunks(conn: sqlite3.Connection, space: str) -> None:
+    """Прибирає з повнотекстового індексу рядки простору, який зникає.
 
-    Використовується, коли нова версія приходить з іншою моделлю ембедінгу:
-    старі вектори в новому просторі не мають сенсу, але все інше — файли,
-    теги, виправлені транскрипції — має пережити оновлення.
+    FTS5 — окрема таблиця, каскадів вона не знає. Якщо лишити там сироти,
+    наступний фрагмент із тим самим ідентифікатором впаде на конфлікті
+    первинного ключа, і переіндексація зупиниться посеред роботи.
     """
-    table = {"image": "vec_image", "text": "vec_text"}[space]
+    rows = conn.execute(
+        "SELECT id FROM embeddings WHERE space = ?", (space,)
+    ).fetchall()
+    for row in rows:
+        conn.execute("DELETE FROM chunk_fts WHERE rowid = ?", (row["id"],))
 
-    conn.execute(f"DROP TABLE IF EXISTS {table}")  # noqa: S608 — білий список вище
-    conn.execute(
-        f"CREATE VIRTUAL TABLE {table} USING vec0(embedding float[{dim}])"  # noqa: S608
-    )
-    conn.execute("DELETE FROM embeddings WHERE space = ?", (space,))
-    # Калібрування рахувалося на старих векторах — воно більше ні про що.
-    conn.execute("DELETE FROM score_calibration WHERE space = ?", (space,))
 
+def _requeue_all(conn: sqlite3.Connection) -> int:
+    """Ставить кожен запис у чергу на повторну обробку."""
     now = datetime.now(UTC).isoformat()
     rows = conn.execute("SELECT id, kind FROM items").fetchall()
     for row in rows:
@@ -136,9 +163,34 @@ def rebuild_vector_space(
             (row["id"], row["kind"], now, now),
         )
         conn.execute("UPDATE items SET status = 'pending' WHERE id = ?", (row["id"],))
+    return len(rows)
 
+
+def rebuild_vector_space(
+    conn: sqlite3.Connection, space: str, dim: int, reason: str
+) -> int:
+    """Перестворює векторну таблицю під нову розмірність і ставить записи в чергу.
+
+    Використовується, коли нова версія приходить з іншою моделлю ембедінгу:
+    старі вектори в новому просторі не мають сенсу, але все інше — файли,
+    теги, виправлені транскрипції — має пережити оновлення.
+    """
+    from .connection import vec_table
+
+    table = vec_table(space)
+
+    conn.execute(f"DROP TABLE IF EXISTS {table}")  # noqa: S608 — назва з білого списку
+    conn.execute(
+        f"CREATE VIRTUAL TABLE {table} USING vec0(embedding float[{dim}])"  # noqa: S608
+    )
+    _forget_chunks(conn, space)
+    conn.execute("DELETE FROM embeddings WHERE space = ?", (space,))
+    # Калібрування рахувалося на старих векторах — воно більше ні про що.
+    conn.execute("DELETE FROM score_calibration WHERE space = ?", (space,))
+
+    count = _requeue_all(conn)
     log.warning(
         "Простір «%s» перебудовано (%s). У черзі на переобробку: %d",
-        space, reason, len(rows),
+        space, reason, count,
     )
-    return len(rows)
+    return count

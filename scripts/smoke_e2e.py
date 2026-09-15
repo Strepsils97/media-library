@@ -51,6 +51,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--images", type=int, default=20)
     ap.add_argument("--audio", type=int, default=6)
+    ap.add_argument("--search-only", action="store_true",
+                    help="шукати по вже проіндексованій бібліотеці")
     args = ap.parse_args()
 
     settings = get_settings()
@@ -58,8 +60,8 @@ def main() -> None:
     init_db()
     print(f"Бібліотека: {settings.data_dir}\n")
 
-    images = sorted((SAMPLES / "images").iterdir())[: args.images]
-    audio = sorted((SAMPLES / "audio").iterdir())[: args.audio]
+    images = [] if args.search_only else sorted((SAMPLES / "images").iterdir())[: args.images]
+    audio = [] if args.search_only else sorted((SAMPLES / "audio").iterdir())[: args.audio]
 
     print(f"--- інжест {len(images)} картинок ---")
     start = time.perf_counter()

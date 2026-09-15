@@ -14,6 +14,10 @@ export interface SearchHit {
   label: string;
   /** Нормалізована схожість 0..100. Порівнювана між модальностями. */
   score: number;
+  /** Чим саме запис заслужив місце у видачі. */
+  source: "image" | "text" | "phrase";
+  /** Наскільки точно збіглася фраза (лише для source="phrase"). */
+  phrase_ratio: number | null;
   created_at: string;
   tags: string[];
   /** Прев'ю: картинка, кадр відео або null для аудіо й тексту. */

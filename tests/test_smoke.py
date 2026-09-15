@@ -15,16 +15,26 @@ def test_vec_roundtrip(tmp_path):
     conn = db.connect(tmp_path / "t.db")
     db.init_db(conn)
 
-    conn.execute("INSERT INTO vec_image(rowid, embedding) VALUES (?, ?)",
-                 (1, db.serialize([0.0] * db.IMAGE_DIM)))
-    conn.execute("INSERT INTO vec_image(rowid, embedding) VALUES (?, ?)",
-                 (2, db.serialize([1.0] * db.IMAGE_DIM)))
+    dim = db.SPACES["image_a"]
+    table = db.vec_table("image_a")
+    conn.execute(f"INSERT INTO {table}(rowid, embedding) VALUES (?, ?)",
+                 (1, db.serialize([0.0] * dim)))
+    conn.execute(f"INSERT INTO {table}(rowid, embedding) VALUES (?, ?)",
+                 (2, db.serialize([1.0] * dim)))
     conn.commit()
 
-    rows = db.knn(conn, "image", [0.0] * db.IMAGE_DIM, limit=5)
+    rows = db.knn(conn, "image_a", [0.0] * dim, limit=5)
     assert [r["rowid"] for r in rows] == [1, 2]
 
-    rows = db.knn(conn, "image", [0.0] * db.IMAGE_DIM, limit=5, restrict_to=[2])
+    rows = db.knn(conn, "image_a", [0.0] * dim, limit=5, restrict_to=[2])
     assert [r["rowid"] for r in rows] == [2]
 
-    assert db.knn(conn, "image", [0.0] * db.IMAGE_DIM, limit=5, restrict_to=[]) == []
+    assert db.knn(conn, "image_a", [0.0] * dim, limit=5, restrict_to=[]) == []
+
+
+def test_unknown_space_is_rejected(library):
+    import pytest
+
+    # Назва простору підставляється в SQL, тож довільний рядок приймати не можна.
+    with pytest.raises(KeyError):
+        db.vec_table("image'; DROP TABLE items; --")

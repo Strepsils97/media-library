@@ -61,13 +61,13 @@ def test_dimension_change_rebuilds_without_losing_data(library, monkeypatch):
     )
     repo.create_tag("важливе")
     repo.set_item_tags(item_id, ["важливе"])
-    repo.add_embedding(item_id, "text", [0.1] * db.TEXT_DIM, chunk_ix=0, chunk_text="x")
+    repo.add_embedding(item_id, "text", [0.1] * db.SPACES["text"], chunk_ix=0, chunk_text="x")
     repo.clear_done_jobs()
 
     assert conn.execute("SELECT COUNT(*) AS n FROM embeddings").fetchone()["n"] == 1
 
     # Нова версія застосунку з іншим текстовим ембедером.
-    monkeypatch.setattr(db, "TEXT_DIM", 384)
+    monkeypatch.setitem(db.SPACES, "text", 384)
     db.init_db(conn)
 
     item = repo.get_item(item_id)
@@ -85,16 +85,16 @@ def test_dimension_change_rebuilds_without_losing_data(library, monkeypatch):
     ).fetchone()["n"]
     assert queued == 1, "запис має стати в чергу на переобробку"
 
-    # Нова таблиця справді приймає вектори нової розмірності.
+    # Нова таблиця справді приймає вектори нової розмірності й відхиляє стару.
     repo.add_embedding(item_id, "text", [0.2] * 384, chunk_ix=0, chunk_text="y")
-    with pytest.raises(sqlite3.OperationalError):
+    with pytest.raises(sqlite3.Error):
         repo.add_embedding(item_id, "text", [0.2] * 768, chunk_ix=1, chunk_text="z")
 
 
 def test_unchanged_dimensions_keep_vectors(library):
     conn = db.init_db()
     item_id = _seed_item()
-    repo.add_embedding(item_id, "text", [0.1] * db.TEXT_DIM, chunk_ix=0, chunk_text="x")
+    repo.add_embedding(item_id, "text", [0.1] * db.SPACES["text"], chunk_ix=0, chunk_text="x")
 
     db.init_db(conn)
 
@@ -111,26 +111,27 @@ def test_pending_migration_runs_once_and_keeps_data(library, monkeypatch):
     applied: list[int] = []
 
     def add_column(connection):
-        applied.append(2)
+        applied.append(migrations.SCHEMA_VERSION)
         connection.execute("ALTER TABLE items ADD COLUMN rating INTEGER")
 
-    monkeypatch.setattr(migrations, "SCHEMA_VERSION", 2)
+    nxt = migrations.SCHEMA_VERSION + 1
+    monkeypatch.setattr(migrations, "SCHEMA_VERSION", nxt)
     monkeypatch.setattr(
         migrations,
         "MIGRATIONS",
-        [migrations.Migration(2, "додано items.rating", add_column)],
+        [migrations.Migration(nxt, "додано items.rating", add_column)],
     )
 
-    assert migrations.run(conn) == 2
-    assert applied == [2], "міграція має відпрацювати рівно раз"
+    assert migrations.run(conn) == nxt
+    assert applied == [nxt], "міграція має відпрацювати рівно раз"
 
     # Дані на місці, нова колонка теж.
     assert repo.get_item(item_id)["rating"] is None
     assert repo.tags_for_item(item_id) == ["збережи"]
 
     # Другий старт нічого не повторює.
-    assert migrations.run(conn) == 2
-    assert applied == [2]
+    assert migrations.run(conn) == nxt
+    assert applied == [nxt]
 
 
 def test_failed_migration_rolls_back(library, monkeypatch):
@@ -142,9 +143,10 @@ def test_failed_migration_rolls_back(library, monkeypatch):
         connection.execute("ALTER TABLE items ADD COLUMN half_done INTEGER")
         raise RuntimeError("щось пішло не так")
 
-    monkeypatch.setattr(migrations, "SCHEMA_VERSION", 2)
+    before = migrations.SCHEMA_VERSION
+    monkeypatch.setattr(migrations, "SCHEMA_VERSION", before + 1)
     monkeypatch.setattr(
-        migrations, "MIGRATIONS", [migrations.Migration(2, "зламана", broken)]
+        migrations, "MIGRATIONS", [migrations.Migration(before + 1, "зламана", broken)]
     )
 
     with pytest.raises(RuntimeError, match="щось пішло не так"):
@@ -154,4 +156,4 @@ def test_failed_migration_rolls_back(library, monkeypatch):
     row = conn.execute(
         "SELECT value FROM meta WHERE key = 'schema_version'"
     ).fetchone()
-    assert int(row["value"]) == 1
+    assert int(row["value"]) == before

@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 
 import numpy as np
 
-from ..db.connection import deserialize, get_connection
+from ..db.connection import IMAGE_SPACES, deserialize, get_connection, vec_table
 
 log = logging.getLogger(__name__)
 
@@ -62,9 +62,8 @@ _MIN_ITEMS = 1
 
 
 def _space_vectors(space: str, limit: int = 400) -> np.ndarray:
-    table = {"image": "vec_image", "text": "vec_text"}[space]
     rows = get_connection().execute(
-        f"SELECT embedding FROM {table} LIMIT ?",  # noqa: S608 — білий список вище
+        f"SELECT embedding FROM {vec_table(space)} LIMIT ?",  # noqa: S608 — назва з білого списку
         (limit,),
     ).fetchall()
     if not rows:
@@ -80,8 +79,11 @@ def compute(space: str) -> tuple[float, float] | None:
     if vectors.shape[0] < _MIN_ITEMS:
         return None
 
-    embedder = get_image_embedder() if space == "image" else get_text_embedder()
-    queries = embedder.encode_queries(DECOY_QUERIES)
+    if space in IMAGE_SPACES:
+        # Ансамбль повертає словник просторів — беремо той, який калібруємо.
+        queries = get_image_embedder().encode_queries(DECOY_QUERIES)[space]
+    else:
+        queries = get_text_embedder().encode_queries(DECOY_QUERIES)
 
     similarities = (queries @ vectors.T).ravel()
     mean = float(similarities.mean())
@@ -113,8 +115,9 @@ def load(space: str) -> tuple[float, float] | None:
 
 
 def _vector_count(space: str) -> int:
-    table = {"image": "vec_image", "text": "vec_text"}[space]
-    row = get_connection().execute(f"SELECT COUNT(*) AS n FROM {table}").fetchone()  # noqa: S608
+    row = get_connection().execute(
+        f"SELECT COUNT(*) AS n FROM {vec_table(space)}"  # noqa: S608 — назва з білого списку
+    ).fetchone()
     return int(row["n"])
 
 

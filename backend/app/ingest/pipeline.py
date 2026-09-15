@@ -9,6 +9,7 @@ from PIL import Image
 
 from ..config import get_settings
 from ..db import repo
+from ..db.connection import IMAGE_SPACES
 from ..ml import asr
 from ..ml.registry import get_image_embedder, get_text_embedder
 from . import frames as frames_mod
@@ -19,9 +20,15 @@ log = logging.getLogger(__name__)
 
 
 def _embed_image_file(item_id: int, path: Path, frame_id: int | None, ts_s: float | None) -> None:
+    """Кодує зображення всіма візуальними моделями одразу.
+
+    Кадр лягає в кожен простір окремим рядком, але з тим самим frame_id —
+    саме за ним пошук потім зводить думки моделей про один і той самий кадр.
+    """
     with Image.open(path) as image:
-        vector = get_image_embedder().encode_images([image.convert("RGB")])[0]
-    repo.add_embedding(item_id, "image", vector, frame_id=frame_id, ts_s=ts_s)
+        vectors = get_image_embedder().encode_images([image.convert("RGB")])
+    for space, batch in vectors.items():
+        repo.add_embedding(item_id, space, batch[0], frame_id=frame_id, ts_s=ts_s)
 
 
 def index_text(item_id: int, text: str, *, from_transcript_segments=None) -> None:
@@ -52,7 +59,8 @@ def process_image(item_id: int) -> None:
     path = settings.originals_dir / item["stored_path"]
 
     storage.make_thumbnail(path, item["content_hash"])
-    repo.clear_embeddings(item_id, "image")
+    for space in IMAGE_SPACES:
+        repo.clear_embeddings(item_id, space)
     _embed_image_file(item_id, path, frame_id=None, ts_s=None)
 
 
@@ -97,7 +105,8 @@ def process_video(item_id: int, on_progress=None) -> None:
     assert item is not None
     path = settings.originals_dir / item["stored_path"]
 
-    repo.clear_embeddings(item_id, "image")
+    for space in IMAGE_SPACES:
+        repo.clear_embeddings(item_id, space)
     timestamps = frames_mod.pick_timestamps(path, item["duration_s"])
     saved = frames_mod.extract(path, timestamps, item["content_hash"])
 
