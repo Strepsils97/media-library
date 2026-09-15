@@ -118,6 +118,15 @@ def run(conn: sqlite3.Connection) -> int:
         )
 
     pending = [m for m in MIGRATIONS if m.version > current]
+
+    if pending:
+        # Міграція змінює базу незворотно. Відкат усередині транзакції рятує
+        # від половинчастого кроку, але не від кроку, який відпрацював
+        # «успішно» й зіпсував дані. Знімок до початку — рятує.
+        from . import backup
+
+        backup.create(f"before-migration-{pending[-1].version}")
+
     for migration in sorted(pending, key=lambda m: m.version):
         log.info("Міграція %s: %s", migration.version, migration.description)
         try:

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "../api";
 import { formatBytes } from "../components/AppShell";
+import { BackupsPanel } from "../components/BackupsPanel";
 import type { LibraryStats, RuntimeStatus, UserSettings } from "../types";
 
 /** Цифри — з реального заміру на цій машині (Фаза 0: 36 файлів, 596 с аудіо). */
@@ -289,6 +290,10 @@ export function SettingsScreen({ stats, runtime, onSettings }: Props) {
           ) : (
             <p className="text-[12px] text-ink-faint">…</p>
           )}
+        </div>
+
+        <div className="border-t border-line pt-5">
+          <BackupsPanel dataDir={stats?.data_dir ?? null} />
         </div>
 
         <div className="space-y-2 border-t border-line pt-5">

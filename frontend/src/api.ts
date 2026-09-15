@@ -1,4 +1,5 @@
 import type {
+  BackupList,
   ItemDetail,
   Job,
   LibraryStats,
@@ -61,6 +62,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text }),
     }),
+
+  backups: () => request<BackupList>("/backups"),
+  createBackup: () => request<void>("/backups", { method: "POST" }),
+  restoreBackup: (name: string) =>
+    request<{ pending_restore: string }>(
+      `/backups/${encodeURIComponent(name)}/restore`,
+      { method: "POST" },
+    ),
+  cancelRestore: () => request<void>("/backups/pending", { method: "DELETE" }),
+  deleteBackup: (name: string) =>
+    request<void>(`/backups/${encodeURIComponent(name)}`, { method: "DELETE" }),
 
   settings: () => request<UserSettings>("/settings"),
   saveSettings: (patch: Partial<UserSettings>) =>

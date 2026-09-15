@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from . import settings_store
 from .api.routes import router
 from .config import get_settings
+from .db import backup
 from .db.connection import init_db
 from .version import APP_VERSION
 from .worker import queue
@@ -28,7 +29,13 @@ async def lifespan(app: FastAPI):
     settings = get_settings()
     settings.ensure_dirs()
     settings_store.load()
+
+    # Відновлення з копії робиться саме тут — до першого підключення до бази.
+    if backup.apply_pending_restore():
+        log.warning("Базу відновлено з резервної копії")
+
     init_db()
+    backup.create_if_due()
     queue.start()
 
     # Ваги важать гігабайти, і перше ж завантаження блокує потік на десятки

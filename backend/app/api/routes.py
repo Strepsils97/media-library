@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 from .. import settings_store
 from ..config import get_settings
-from ..db import repo
+from ..db import backup, repo
 from ..ingest import storage
 from ..ingest.pipeline import index_text
 from ..ml.cuda import resolve_device
@@ -126,6 +126,60 @@ def patch_user_settings(request: SettingsPatch) -> dict:
         return settings_store.update(request.model_dump(exclude_none=True))
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
+
+
+# --- резервні копії ---------------------------------------------------------
+
+
+def _backup_payload(item: backup.Backup) -> dict:
+    return {
+        "name": item.name,
+        "created_at": item.created_at,
+        "size_bytes": item.size_bytes,
+        "reason": item.reason,
+    }
+
+
+@router.get("/backups")
+def get_backups() -> dict:
+    return {
+        "backups": [_backup_payload(b) for b in backup.listing()],
+        "keep": backup.KEEP,
+        "pending_restore": backup.pending_restore_source(),
+    }
+
+
+@router.post("/backups")
+def post_backup() -> dict:
+    created = backup.create("manual")
+    if created is None:
+        raise HTTPException(400, "Немає чого копіювати: база ще порожня")
+    return _backup_payload(created)
+
+
+@router.post("/backups/{name}/restore")
+def restore_backup(name: str) -> dict:
+    try:
+        backup.schedule_restore(name)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"pending_restore": name}
+
+
+@router.delete("/backups/pending")
+def cancel_restore() -> dict:
+    return {"cancelled": backup.cancel_restore()}
+
+
+@router.delete("/backups/{name}")
+def delete_backup(name: str) -> dict:
+    item = next((b for b in backup.listing() if b.name == name), None)
+    if item is None:
+        raise HTTPException(404, "Копію не знайдено")
+    item.path.unlink(missing_ok=True)
+    return {"deleted": name}
 
 
 @router.post("/library/reindex")

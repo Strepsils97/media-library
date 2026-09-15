@@ -120,3 +120,17 @@ export interface UserSettings {
     themes: string[];
   };
 }
+
+export interface BackupInfo {
+  name: string;
+  created_at: string;
+  size_bytes: number;
+  reason: string;
+}
+
+export interface BackupList {
+  backups: BackupInfo[];
+  keep: number;
+  /** Копія, з якої база відновиться при наступному запуску. */
+  pending_restore: string | null;
+}
