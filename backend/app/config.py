@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     max_frames_per_video: int = 12
     min_frame_interval_s: float = 2.0
 
+    # Куди зберігати експортовані файли. Порожньо — тека завантажень.
+    download_dir: str = ""
+
     # Пошук
     knn_candidates: int = 200
     snippet_words: int = 25

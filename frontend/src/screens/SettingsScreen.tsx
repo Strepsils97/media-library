@@ -254,6 +254,38 @@ export function SettingsScreen({ stats, runtime, onSettings }: Props) {
         </div>
 
         <div className="space-y-2">
+          <SectionLabel>Куди зберігати файли</SectionLabel>
+          <div className="flex gap-2">
+            <div className="selectable tnum min-w-0 flex-1 truncate rounded border border-line bg-surface px-3 py-2 text-[12px] text-ink">
+              {settings.download_dir_effective}
+            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                const { path } = await api.pickFolder();
+                if (path) apply({ download_dir: path });
+              }}
+              className="shrink-0 rounded border border-line bg-surface px-3 py-2 text-[12px] text-ink hover:border-line-2 hover:bg-surface-2"
+            >
+              Обрати…
+            </button>
+            {settings.download_dir && (
+              <button
+                type="button"
+                onClick={() => apply({ download_dir: "" })}
+                className="shrink-0 rounded border border-line bg-surface px-3 py-2 text-[12px] text-ink-dim hover:text-ink"
+              >
+                Скинути
+              </button>
+            )}
+          </div>
+          <p className="text-[11px] text-ink-faint">
+            сюди потрапляють записи, збережені кнопкою «Завантажити»
+            {!settings.download_dir && " · зараз це стандартна тека завантажень"}
+          </p>
+        </div>
+
+        <div className="space-y-2">
           <SectionLabel>Тека бібліотеки</SectionLabel>
           <div className="selectable tnum rounded border border-line bg-surface px-3 py-2 text-[12px] text-ink">
             {stats?.data_dir ?? "…"}

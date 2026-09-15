@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import logging
-import subprocess
 from pathlib import Path
 
 from ..config import get_settings
-from .media_tools import ffmpeg
+from .media_tools import ffmpeg, run
 
 log = logging.getLogger(__name__)
 
@@ -18,11 +17,10 @@ def _scene_timestamps(path: Path, threshold: float = 0.30) -> list[float]:
     Свій детектор тут зайвий: ffmpeg уже в залежностях заради декодування,
     а його scene-фільтр дає цілком придатні межі.
     """
-    result = subprocess.run(
+    result = run(
         [ffmpeg(), "-hide_banner", "-i", str(path),
          "-filter:v", f"select='gt(scene,{threshold})',showinfo",
-         "-f", "null", "-"],
-        capture_output=True, text=True, check=False, errors="replace",
+         "-f", "null", "-"]
     )
     stamps: list[float] = []
     for line in result.stderr.splitlines():
@@ -72,11 +70,10 @@ def extract(path: Path, timestamps: list[float], content_hash: str) -> list[tupl
         relative = Path(content_hash[:2]) / f"{content_hash}_{index:02d}.webp"
         target = settings.frames_dir / relative
         if not target.exists():
-            result = subprocess.run(
+            result = run(
                 [ffmpeg(), "-hide_banner", "-loglevel", "error", "-y",
                  "-ss", f"{ts:.3f}", "-i", str(path), "-frames:v", "1",
-                 "-vf", "scale='min(512,iw)':-2", str(target)],
-                capture_output=True, text=True, check=False,
+                 "-vf", "scale='min(512,iw)':-2", str(target)]
             )
             if result.returncode != 0 or not target.exists():
                 log.warning("Не вдалося витягти кадр на %.1fs з %s", ts, path.name)

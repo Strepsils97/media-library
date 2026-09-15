@@ -57,11 +57,14 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   deleteItem: (id: number) => request<void>(`/items/${id}`, { method: "DELETE" }),
-  exportItem: (id: number, denoise: boolean) =>
-    request<{ path: string; name: string; denoised: boolean }>(
+  exportItem: (id: number, denoise: string) =>
+    request<{ path: string; name: string; denoised: string }>(
       `/items/${id}/export`,
       { method: "POST", body: JSON.stringify({ denoise }) },
     ),
+  /** Адреса обробленого звуку для прослуховування. */
+  previewUrl: (id: number, level: string) =>
+    `/api/media/preview/${id}?level=${encodeURIComponent(level)}`,
   reveal: (path: string) =>
     request<{ revealed: boolean }>("/reveal", {
       method: "POST",
@@ -90,6 +93,8 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),
+  pickFolder: () =>
+    request<{ path: string | null }>("/settings/pick-folder", { method: "POST" }),
   reindex: () =>
     request<{ queued: number }>("/library/reindex", { method: "POST" }),
 

@@ -1,8 +1,8 @@
-169 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.7
-169 INFO: Python: 3.14.0
-195 INFO: Platform: Windows-11-10.0.26200-SP0
-195 INFO: Python environment: C:\Users\didyk\Projects\media-library\.venv
-21459 INFO: Module search paths (PYTHONPATH):
+158 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.7
+158 INFO: Python: 3.14.0
+182 INFO: Platform: Windows-11-10.0.26200-SP0
+183 INFO: Python environment: C:\Users\didyk\Projects\media-library\.venv
+15830 INFO: Module search paths (PYTHONPATH):
 ['C:\\Users\\didyk\\Projects\\media-library',
  'C:\\Users\\didyk\\AppData\\Local\\Programs\\Python\\Python314\\python314.zip',
  'C:\\Users\\didyk\\AppData\\Local\\Programs\\Python\\Python314\\DLLs',
@@ -11,208 +11,136 @@
  'C:\\Users\\didyk\\Projects\\media-library\\.venv',
  'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages',
  'C:\\Users\\didyk\\Projects\\media-library']
-21858 INFO: Appending 'binaries' from .spec
-21863 INFO: Appending 'datas' from .spec
-22878 INFO: checking Analysis
-22879 INFO: Building Analysis because Analysis-00.toc is non existent
-22879 INFO: Looking for Python shared library...
-22879 INFO: Using Python shared library: C:\Users\didyk\AppData\Local\Programs\Python\Python314\python314.dll
-22879 INFO: Running Analysis Analysis-00.toc
-22879 INFO: Target bytecode optimization level: 0
-22879 INFO: Initializing module dependency graph...
-22880 INFO: Initializing module graph hook caches...
-23034 INFO: Analyzing modules for base_library.zip ...
-23833 INFO: Processing standard module hook 'hook-math.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-25248 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-25980 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-26735 INFO: Processing standard module hook 'hook-difflib.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-26763 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-33767 INFO: Caching module dependency graph...
-33808 INFO: Analyzing C:\Users\didyk\Projects\media-library\run_app.py
-33934 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-34183 INFO: Processing standard module hook 'hook-xml.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-34830 INFO: Processing standard module hook 'hook-_ctypes.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-34929 INFO: Processing standard module hook 'hook-uvicorn.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-37129 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-37135 INFO: SetuptoolsInfo: initializing cached setuptools info...
-40758 INFO: Processing standard module hook 'hook-platform.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-41610 INFO: Processing standard module hook 'hook-webbrowser.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-42489 INFO: Processing standard module hook 'hook-websockets.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-44104 INFO: Processing standard module hook 'hook-anyio.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-46343 INFO: Processing standard module hook 'hook-pydantic.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-47591 INFO: Processing standard module hook 'hook-rich.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-48919 INFO: Processing standard module hook 'hook-pygments.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-52627 INFO: Processing standard module hook 'hook-sysconfig.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-53521 INFO: Processing standard module hook 'hook-zoneinfo.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-58362 INFO: Processing pre-safe-import-module hook 'hook-tomli.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-58364 INFO: Setuptools: 'tomli' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.tomli'!
-58391 INFO: Processing standard module hook 'hook-setuptools.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-58467 INFO: Processing pre-safe-import-module hook 'hook-distutils.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-58595 INFO: Processing pre-safe-import-module hook 'hook-jaraco.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-58598 INFO: Setuptools: 'jaraco' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.jaraco'!
-58631 INFO: Processing pre-safe-import-module hook 'hook-more_itertools.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-58632 INFO: Setuptools: 'more_itertools' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.more_itertools'!
-59205 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-59936 INFO: Processing standard module hook 'hook-setuptools._vendor.jaraco.text.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-59940 INFO: Processing pre-safe-import-module hook 'hook-importlib_resources.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-59982 INFO: Processing pre-safe-import-module hook 'hook-backports.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-59984 INFO: Setuptools: 'backports' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.backports'!
-60441 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-60442 INFO: Setuptools: 'importlib_metadata' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.importlib_metadata'!
-60510 INFO: Processing standard module hook 'hook-setuptools._vendor.importlib_metadata.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-60514 INFO: Processing pre-safe-import-module hook 'hook-zipp.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-60516 INFO: Setuptools: 'zipp' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.zipp'!
-62443 INFO: Processing standard module hook 'hook-pkg_resources.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-62751 INFO: Processing pre-safe-import-module hook 'hook-platformdirs.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-62752 INFO: Setuptools: 'platformdirs' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.platformdirs'!
-63452 INFO: Processing pre-safe-import-module hook 'hook-wheel.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-63453 INFO: Setuptools: 'wheel' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.wheel'!
-64272 INFO: Processing standard module hook 'hook-sqlite3.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-64638 INFO: Processing standard module hook 'hook-numpy.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-70467 INFO: Processing standard module hook 'hook-charset_normalizer.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-71407 INFO: Processing standard module hook 'hook-av.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-75712 INFO: Processing standard module hook 'hook-certifi.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-80823 INFO: Processing standard module hook 'hook-PIL.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-81008 INFO: Processing standard module hook 'hook-PIL.Image.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-81590 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-82037 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-83765 INFO: Processing standard module hook 'hook-jinja2.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-85100 INFO: Processing standard module hook 'hook-torch.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+16252 INFO: Appending 'binaries' from .spec
+16258 INFO: Appending 'datas' from .spec
+17306 INFO: checking Analysis
+17307 INFO: Building Analysis because Analysis-00.toc is non existent
+17307 INFO: Looking for Python shared library...
+17307 INFO: Using Python shared library: C:\Users\didyk\AppData\Local\Programs\Python\Python314\python314.dll
+17307 INFO: Running Analysis Analysis-00.toc
+17307 INFO: Target bytecode optimization level: 0
+17307 INFO: Initializing module dependency graph...
+17308 INFO: Initializing module graph hook caches...
+17481 INFO: Analyzing modules for base_library.zip ...
+18979 INFO: Processing standard module hook 'hook-math.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+19011 INFO: Processing standard module hook 'hook-heapq.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+19788 INFO: Processing standard module hook 'hook-encodings.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+23590 INFO: Processing standard module hook 'hook-difflib.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+23816 INFO: Processing standard module hook 'hook-pickle.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+28780 INFO: Caching module dependency graph...
+28830 INFO: Analyzing C:\Users\didyk\Projects\media-library\run_app.py
+28959 INFO: Processing standard module hook 'hook-multiprocessing.util.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+29218 INFO: Processing standard module hook 'hook-xml.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+29903 INFO: Processing standard module hook 'hook-_ctypes.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+30026 INFO: Processing standard module hook 'hook-uvicorn.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+32182 INFO: Processing pre-safe-import-module hook 'hook-typing_extensions.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+32187 INFO: SetuptoolsInfo: initializing cached setuptools info...
+35744 INFO: Processing standard module hook 'hook-platform.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+36556 INFO: Processing standard module hook 'hook-webbrowser.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+37493 INFO: Processing standard module hook 'hook-websockets.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+39128 INFO: Processing standard module hook 'hook-anyio.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+41389 INFO: Processing standard module hook 'hook-pydantic.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+42630 INFO: Processing standard module hook 'hook-rich.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+43990 INFO: Processing standard module hook 'hook-pygments.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+47840 INFO: Processing standard module hook 'hook-sysconfig.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+48829 INFO: Processing standard module hook 'hook-zoneinfo.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+53822 INFO: Processing pre-safe-import-module hook 'hook-tomli.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+53824 INFO: Setuptools: 'tomli' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.tomli'!
+53847 INFO: Processing standard module hook 'hook-setuptools.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+53936 INFO: Processing pre-safe-import-module hook 'hook-distutils.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+54071 INFO: Processing pre-safe-import-module hook 'hook-jaraco.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+54074 INFO: Setuptools: 'jaraco' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.jaraco'!
+54106 INFO: Processing pre-safe-import-module hook 'hook-more_itertools.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+54109 INFO: Setuptools: 'more_itertools' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.more_itertools'!
+54661 INFO: Processing pre-safe-import-module hook 'hook-packaging.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+55402 INFO: Processing standard module hook 'hook-setuptools._vendor.jaraco.text.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+55404 INFO: Processing pre-safe-import-module hook 'hook-importlib_resources.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+55435 INFO: Processing pre-safe-import-module hook 'hook-backports.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+55437 INFO: Setuptools: 'backports' appears to be a full setuptools-vendored copy - creating alias to 'setuptools._vendor.backports'!
+55894 INFO: Processing pre-safe-import-module hook 'hook-importlib_metadata.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+55896 INFO: Setuptools: 'importlib_metadata' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.importlib_metadata'!
+55961 INFO: Processing standard module hook 'hook-setuptools._vendor.importlib_metadata.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+55966 INFO: Processing pre-safe-import-module hook 'hook-zipp.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+55968 INFO: Setuptools: 'zipp' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.zipp'!
+57886 INFO: Processing standard module hook 'hook-pkg_resources.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+58206 INFO: Processing pre-safe-import-module hook 'hook-platformdirs.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+58208 INFO: Setuptools: 'platformdirs' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.platformdirs'!
+59002 INFO: Processing pre-safe-import-module hook 'hook-wheel.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+59003 INFO: Setuptools: 'wheel' appears to be a setuptools-vendored copy - creating alias to 'setuptools._vendor.wheel'!
+59848 INFO: Processing standard module hook 'hook-sqlite3.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+60198 INFO: Processing standard module hook 'hook-numpy.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+66481 INFO: Processing standard module hook 'hook-charset_normalizer.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+67511 INFO: Processing standard module hook 'hook-av.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+69049 INFO: Processing standard module hook 'hook-PIL.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+69256 INFO: Processing standard module hook 'hook-PIL.Image.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+69846 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+70259 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+72793 INFO: Processing standard module hook 'hook-certifi.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+79629 INFO: Processing standard module hook 'hook-jinja2.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+81017 INFO: Processing standard module hook 'hook-torch.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
 1390 WARNING: Failed to collect submodules for 'torch.utils.tensorboard' because importing 'torch.utils.tensorboard' raised: ModuleNotFoundError: No module named 'tensorboard'
-W0915 18:58:00.616000 37644 .venv\Lib\site-packages\torch\utils\flop_counter.py:113] triton not found; flop counting will not work for triton kernels
+W0915 19:41:26.757000 35340 .venv\Lib\site-packages\torch\utils\flop_counter.py:113] triton not found; flop counting will not work for triton kernels
 C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\PyInstaller\utils\hooks\__init__.py:665: DeprecationWarning: `torch.distributed._sharding_spec` will be deprecated, use `torch.distributed._shard.sharding_spec` instead
   __import__(name)
 C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\PyInstaller\utils\hooks\__init__.py:665: DeprecationWarning: `torch.distributed._sharded_tensor` will be deprecated, use `torch.distributed._shard.sharded_tensor` instead
   __import__(name)
 C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\PyInstaller\utils\hooks\__init__.py:665: DeprecationWarning: `torch.distributed._shard.checkpoint` will be deprecated, use `torch.distributed.checkpoint` instead
   __import__(name)
-101647 INFO: hook-torch: this torch build does not depend on MKL...
-105575 INFO: Processing standard module hook 'hook-py.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-127749 INFO: Processing standard module hook 'hook-scipy.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-128899 INFO: Processing standard module hook 'hook-pycparser.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-130862 INFO: Processing standard module hook 'hook-scipy.linalg.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-148878 INFO: Processing pre-safe-import-module hook 'hook-win32com.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module'
-171232 INFO: Processing standard module hook 'hook-onnxruntime.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-171496 INFO: Processing pre-safe-import-module hook 'hook-tensorflow.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module'
-182116 INFO: Processing standard module hook 'hook-scipy.special._ufuncs.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-182586 INFO: Processing standard module hook 'hook-scipy.special._ellip_harm_2.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-185505 INFO: Processing standard module hook 'hook-scipy.spatial._ckdtree.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-187281 INFO: Processing standard module hook 'hook-scipy.spatial.transform.rotation.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-189335 INFO: Processing standard module hook 'hook-scipy.stats._stats.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-190561 INFO: Processing standard module hook 'hook-scipy.sparse.csgraph.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-199288 INFO: Processing standard module hook 'hook-torchvision.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-199541 INFO: Processing standard module hook 'hook-torchvision.io.image.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-201993 INFO: Processing standard module hook 'hook-scipy.io.matlab.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-230811 INFO: Processing standard module hook 'hook-fsspec.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-232474 INFO: Processing standard module hook 'hook-urllib3.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-255780 INFO: Processing standard module hook 'hook-xml.dom.domreg.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+97131 INFO: hook-torch: this torch build does not depend on MKL...
+101039 INFO: Processing standard module hook 'hook-py.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+123976 INFO: Processing standard module hook 'hook-scipy.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+125020 INFO: Processing standard module hook 'hook-pycparser.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+127286 INFO: Processing standard module hook 'hook-scipy.linalg.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+144862 INFO: Processing pre-safe-import-module hook 'hook-win32com.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module'
+165967 INFO: Processing standard module hook 'hook-onnxruntime.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+166287 INFO: Processing pre-safe-import-module hook 'hook-tensorflow.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\pre_safe_import_module'
+176109 INFO: Processing standard module hook 'hook-scipy.special._ufuncs.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+176638 INFO: Processing standard module hook 'hook-scipy.special._ellip_harm_2.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+179827 INFO: Processing standard module hook 'hook-scipy.spatial._ckdtree.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+181776 INFO: Processing standard module hook 'hook-scipy.spatial.transform.rotation.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+183875 INFO: Processing standard module hook 'hook-scipy.stats._stats.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+185168 INFO: Processing standard module hook 'hook-scipy.sparse.csgraph.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+193508 INFO: Processing standard module hook 'hook-torchvision.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+193628 INFO: Processing standard module hook 'hook-torchvision.io.image.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+195123 INFO: Processing standard module hook 'hook-scipy.io.matlab.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+221763 INFO: Processing standard module hook 'hook-fsspec.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+223395 INFO: Processing standard module hook 'hook-urllib3.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+241487 INFO: Processing standard module hook 'hook-xml.dom.domreg.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
 C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\sympy\testing\runtests.py:283: SyntaxWarning: 'return' in a 'finally' block
   return p.returncode
-263516 INFO: Processing standard module hook 'hook-transformers.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-294464 INFO: Processing standard module hook 'hook-regex.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-299490 INFO: Processing standard module hook 'hook-timm.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-311876 INFO: Processing standard module hook 'hook-sklearn.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-313045 INFO: Processing standard module hook 'hook-sklearn.utils.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-313542 INFO: Processing standard module hook 'hook-cloudpickle.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-314559 INFO: Processing standard module hook 'hook-narwhals.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-320097 INFO: Processing standard module hook 'hook-sklearn.externals.array_api_compat.numpy.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-320311 INFO: Processing standard module hook 'hook-sklearn.externals.array_api_compat.cupy.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-320472 INFO: Processing standard module hook 'hook-sklearn.externals.array_api_compat.torch.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-320592 INFO: Processing standard module hook 'hook-sklearn.externals.array_api_compat.dask.array.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-321967 INFO: Processing standard module hook 'hook-sklearn.metrics.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-333396 INFO: Processing standard module hook 'hook-sklearn.metrics.cluster.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-333607 INFO: Processing standard module hook 'hook-sklearn.metrics.pairwise.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-334135 INFO: Processing standard module hook 'hook-sklearn.cluster.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-334683 INFO: Processing standard module hook 'hook-sklearn.neighbors.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-335041 INFO: Processing standard module hook 'hook-sklearn.linear_model.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-439769 INFO: Processing standard module hook 'hook-wcwidth.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-440813 INFO: Processing standard module hook 'hook-webview.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\webview\\__pyinstaller'
-442085 INFO: Processing pre-safe-import-module hook 'hook-gi.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
-442343 INFO: Processing standard module hook 'hook-clr.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\pythonnet\\_pyinstaller'
-442510 INFO: Processing standard module hook 'hook-clr_loader.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-442957 INFO: Analyzing hidden import 'uvicorn.loops.auto'
-443001 INFO: Analyzing hidden import 'uvicorn.protocols.http.auto'
-443016 INFO: Analyzing hidden import 'uvicorn.protocols.websockets.auto'
-443031 INFO: Analyzing hidden import 'uvicorn.lifespan.on'
-443060 INFO: Processing module hooks (post-graph stage)...
-445285 WARNING: Hidden import "pycparser.lextab" not found!
-445285 WARNING: Hidden import "pycparser.yacctab" not found!
-446521 INFO: Processing standard module hook 'hook-sklearn.tree.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
-464448 WARNING: Hidden import "torchvision.image" not found!
-464448 WARNING: Hidden import "torchvision._C" not found!
-465049 WARNING: Hidden import "tzdata" not found!
-466074 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
-475117 WARNING: Hidden import "scipy.special._cdflib" not found!
-475551 INFO: Performing binary vs. data reclassification (10830 entries)
-600538 INFO: Looking for ctypes DLLs
-600726 WARNING: Ignoring /usr/lib64/libgomp.so.1 imported from C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\torch\_inductor\codecache.py - only basenames are supported with ctypes imports!
-601254 INFO: Analyzing run-time hooks ...
-601300 INFO: Including run-time hook 'pyi_rth_pkgutil.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-601318 INFO: Including run-time hook 'pyi_rth_setuptools.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-601334 INFO: Including run-time hook 'pyi_rth_pkgres.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-601357 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-601375 INFO: Including run-time hook 'pyi_rth_multiprocessing.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
-601884 INFO: Creating base_library.zip...
-601907 INFO: Looking for dynamic libraries
-W0915 19:06:30.598000 27660 .venv\Lib\site-packages\torch\utils\flop_counter.py:113] triton not found; flop counting will not work for triton kernels
-C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\PyInstaller\building\build_main.py:227: DeprecationWarning: `torch.distributed._sharding_spec` will be deprecated, use `torch.distributed._shard.sharding_spec` instead
-  __import__(package)
-C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\PyInstaller\building\build_main.py:227: DeprecationWarning: `torch.distributed._sharded_tensor` will be deprecated, use `torch.distributed._shard.sharded_tensor` instead
-  __import__(package)
-C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\PyInstaller\building\build_main.py:227: DeprecationWarning: `torch.distributed._shard.checkpoint` will be deprecated, use `torch.distributed.checkpoint` instead
-  __import__(package)
-C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\websockets\legacy\__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
-  warnings.warn(  # deprecated in 14.0 - 2024-11-09
-625895 INFO: Extra DLL search directories (AddDllDirectory): ['C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\torch\\lib', 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\numpy.libs', 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\torchvision', 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\torchvision', 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\scipy.libs', 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\ml_dtypes.libs', 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\av.libs', 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\ctranslate2', 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\ctranslate2/../_rocm_sdk_core/bin']
-625895 INFO: Extra DLL search directories (PATH): []
-635835 INFO: Warnings written to C:\Users\didyk\Projects\media-library\build\media-library\warn-media-library.txt
-636775 INFO: Graph cross-reference written to C:\Users\didyk\Projects\media-library\build\media-library\xref-media-library.html
-637703 INFO: checking PYZ
-637704 INFO: Building PYZ because PYZ-00.toc is non existent
-637704 INFO: Building PYZ (ZlibArchive) C:\Users\didyk\Projects\media-library\build\media-library\PYZ-00.pyz
-643902 INFO: Building PYZ (ZlibArchive) C:\Users\didyk\Projects\media-library\build\media-library\PYZ-00.pyz completed successfully.
-644148 INFO: checking PKG
-644148 INFO: Building PKG because PKG-00.toc is non existent
-644148 INFO: Building PKG (CArchive) media-library.pkg
-644266 INFO: Building PKG (CArchive) media-library.pkg completed successfully.
-644268 INFO: Bootloader C:\Users\didyk\Projects\media-library\.venv\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
-644268 INFO: checking EXE
-644268 INFO: Building EXE because EXE-00.toc is non existent
-644268 INFO: Building EXE from EXE-00.toc
-644269 INFO: Copying bootloader EXE to C:\Users\didyk\Projects\media-library\build\media-library\media-library.exe
-644385 INFO: Copying icon to EXE
-644477 INFO: Copying 0 resources to EXE
-644477 INFO: Embedding manifest in EXE
-644553 INFO: Appending PKG archive to EXE
-644719 INFO: Fixing EXE headers
-646080 INFO: Building EXE from EXE-00.toc completed successfully.
-646337 INFO: checking COLLECT
-646337 INFO: Building COLLECT because COLLECT-00.toc is non existent
-646337 INFO: Removing dir C:\Users\didyk\Projects\media-library\dist\media-library
-652136 INFO: Building COLLECT COLLECT-00.toc
-752493 INFO: Building COLLECT COLLECT-00.toc completed successfully.
-752705 INFO: Build complete! The results are available in: C:\Users\didyk\Projects\media-library\dist
-   бібліотеку відкладено: .data-stash
-1/4 PyInstaller…
-   бібліотеку повернено на місце
-2/4 копіювання ваг моделей…
-3/4 підпис…
-  ?????????? ??? ?: 1631E5C5BDC6A9AE38392782FA5E422DA2357549
-  ??? ? ????????? ?????????
-  ?????????: Valid
-  ?????????: Valid
-  ????????:  CN=media-library (local build)
-4/4 перевірка…
-  OK   exe
-  OK   фронтенд
-  OK   схема БД
-  OK   sqlite-vec
-  OK   ffmpeg
-  OK   CUDA
-  OK   SigLIP
-  OK   NLLB-CLIP
-  OK   токенізатор NLLB
-  OK   E5
-  OK   ASR
-
-Готово: C:\Users\didyk\Projects\media-library\dist\media-library  (11.50 ГБ)
+246144 INFO: Processing standard module hook 'hook-transformers.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+251837 INFO: Processing standard module hook 'hook-regex.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+253734 INFO: Processing standard module hook 'hook-timm.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+261626 INFO: Processing standard module hook 'hook-sklearn.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+262081 INFO: Processing standard module hook 'hook-sklearn.utils.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+262373 INFO: Processing standard module hook 'hook-cloudpickle.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+263006 INFO: Processing standard module hook 'hook-narwhals.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+267038 INFO: Processing standard module hook 'hook-sklearn.externals.array_api_compat.numpy.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+267204 INFO: Processing standard module hook 'hook-sklearn.externals.array_api_compat.cupy.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+267307 INFO: Processing standard module hook 'hook-sklearn.externals.array_api_compat.torch.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+267400 INFO: Processing standard module hook 'hook-sklearn.externals.array_api_compat.dask.array.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+268582 INFO: Processing standard module hook 'hook-sklearn.metrics.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+278270 INFO: Processing standard module hook 'hook-sklearn.metrics.cluster.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+278489 INFO: Processing standard module hook 'hook-sklearn.metrics.pairwise.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+279016 INFO: Processing standard module hook 'hook-sklearn.cluster.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+279525 INFO: Processing standard module hook 'hook-sklearn.neighbors.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+279834 INFO: Processing standard module hook 'hook-sklearn.linear_model.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+353399 INFO: Processing standard module hook 'hook-wcwidth.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+354465 INFO: Processing standard module hook 'hook-webview.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\webview\\__pyinstaller'
+355729 INFO: Processing pre-safe-import-module hook 'hook-gi.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+356001 INFO: Processing standard module hook 'hook-clr.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\pythonnet\\_pyinstaller'
+356145 INFO: Processing standard module hook 'hook-clr_loader.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+356610 INFO: Analyzing hidden import 'uvicorn.loops.auto'
+356644 INFO: Analyzing hidden import 'uvicorn.protocols.http.auto'
+356658 INFO: Analyzing hidden import 'uvicorn.protocols.websockets.auto'
+356672 INFO: Analyzing hidden import 'uvicorn.lifespan.on'
+356693 INFO: Processing module hooks (post-graph stage)...
+359281 WARNING: Hidden import "pycparser.lextab" not found!
+359282 WARNING: Hidden import "pycparser.yacctab" not found!
+360606 INFO: Processing standard module hook 'hook-sklearn.tree.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+376649 WARNING: Hidden import "torchvision.image" not found!
+376649 WARNING: Hidden import "torchvision._C" not found!
+377243 WARNING: Hidden import "tzdata" not found!
+378144 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from 'C:\\Users\\didyk\\Projects\\media-library\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+386869 WARNING: Hidden import "scipy.special._cdflib" not found!
+387343 INFO: Performing binary vs. data reclassification (10831 entries)

@@ -55,7 +55,8 @@ class SettingsPatch(BaseModel):
 
 
 class ExportRequest(BaseModel):
-    denoise: bool = False
+    # Назва рівня з export.DENOISE_LEVELS або порожньо — без обробки.
+    denoise: str = ""
 
 
 class RevealRequest(BaseModel):
@@ -188,6 +189,18 @@ def delete_backup(name: str) -> dict:
         raise HTTPException(404, "Копію не знайдено")
     item.path.unlink(missing_ok=True)
     return {"deleted": name}
+
+
+@router.post("/settings/pick-folder")
+def pick_folder() -> dict:
+    """Показує системний діалог вибору теки для завантажень."""
+    from ..main import pick_folder as show_dialog
+
+    chosen = show_dialog()
+    if chosen is None:
+        # Скасували або запущено без вікна (режим розробки) — не помилка.
+        return {"path": None}
+    return {"path": chosen}
 
 
 @router.post("/library/reindex")
@@ -347,6 +360,11 @@ def export_item(item_id: int, request: ExportRequest) -> dict:
     return {"path": str(path), "name": path.name, "denoised": request.denoise}
 
 
+@router.get("/denoise-levels")
+def denoise_levels() -> dict:
+    return {"levels": list(export.DENOISE_LEVELS), "default": export.DEFAULT_LEVEL}
+
+
 @router.post("/reveal")
 def reveal_file(request: RevealRequest) -> dict:
     """Показує щойно збережений файл у провіднику."""
@@ -379,6 +397,11 @@ def remove_item(item_id: int) -> dict:
     if item["content_hash"]:
         thumb = settings.thumbs_dir / item["content_hash"][:2] / f"{item['content_hash']}.webp"
         thumb.unlink(missing_ok=True)
+        # Оброблений звук у кеші прослуховування теж лишається без господаря.
+        for cached in (settings.data_dir / "cache" / "denoise").glob(
+            f"{item['content_hash']}-*.mp3"
+        ):
+            cached.unlink(missing_ok=True)
     return {"deleted": item_id}
 
 
@@ -407,6 +430,21 @@ def media_thumb(item_id: int) -> FileResponse:
     if not path.exists():
         raise HTTPException(404, "Прев'ю ще не готове")
     return FileResponse(path, media_type="image/webp")
+
+
+@router.get("/media/preview/{item_id}")
+def media_preview(item_id: int, level: str) -> FileResponse:
+    """Звук, оброблений обраним рівнем — щоб послухати до завантаження."""
+    item = repo.get_item(item_id)
+    if item is None or item["kind"] not in export.AUDIBLE:
+        raise HTTPException(404, "Для цього запису обробка звуку не застосовна")
+
+    try:
+        path = export.preview_path(item, level)
+    except export.ExportFailed as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    return FileResponse(path, media_type="audio/mpeg")
 
 
 @router.get("/media/frame/{frame_id}")

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#08090b;font-family:"IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#e9d34a;text-decoration:none}
+a:hover{color:#f2e27f}
+</style>
+</helmet>
+
+<div style="padding:44px 48px 8px;max-width:1500px">
+<div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#e9d34a">media-library · знак</div>
+<h1 style="margin:14px 0 0;font:600 30px/1.15 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">Чотири напрямки знака</h1>
+<p style="margin:12px 0 0;max-width:700px;font:400 13.5px/1.6 'IBM Plex Sans',sans-serif;color:#9b9a95;text-wrap:pretty">Знак іконки застосунку живе в доку, в шапці вікна на 21 px і в about-вікні. Тож він має триматися геометрії, а не деталей: усі чотири побудовані на квадратній сітці з тих самих примітивів, що вже є в інтерфейсі — кільце схожості, картки сітки, стовпчики хвилі. Жовтий #e9d34a на майже чорному, як в інтерфейсі.</p>
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0">
+<a href="#1a" style="font:500 11.5px/1 'IBM Plex Mono',monospace;padding:7px 10px;background:#15171b;border:1px solid #282c33;border-radius:5px;color:#c9c7c2">1a Кільце</a>
+<a href="#1b" style="font:500 11.5px/1 'IBM Plex Mono',monospace;padding:7px 10px;background:#15171b;border:1px solid #282c33;border-radius:5px;color:#c9c7c2">1b Стопка</a>
+<a href="#1c" style="font:500 11.5px/1 'IBM Plex Mono',monospace;padding:7px 10px;background:#15171b;border:1px solid #282c33;border-radius:5px;color:#c9c7c2">1c Хвиля</a>
+<a href="#1d" style="font:500 11.5px/1 'IBM Plex Mono',monospace;padding:7px 10px;background:#15171b;border:1px solid #282c33;border-radius:5px;color:#c9c7c2">1d Монограма</a>
+</div>
+</div>
+
+<section id="t3" style="padding:34px 48px 44px;border-bottom:1px solid rgba(233,231,227,.07)">
+<div style="display:flex;align-items:baseline;gap:10px;margin:0 0 8px">
+<a href="#t3" style="font:600 10px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:#e9e7e3;color:#0e0f12;border-radius:4px">3</a>
+<span style="font:600 13px/1.2 'IBM Plex Sans',sans-serif;color:#e9e7e3">Фінальний знак — <a href="#2a">2a</a></span>
+<span style="font:400 12px/1.2 'IBM Plex Sans',sans-serif;color:#6b6d70">побудова, варіанти, застосування</span>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start">
+
+<div id="3a" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#3a" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">3a</a>Побудова на сітці 128</div>
+<div style="width:380px;height:300px;background:#0a0b0d;border:1px solid #1e2228;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">
+<svg width="230" height="230" viewBox="0 0 128 128" style="display:block">
+<rect x="0" y="0" width="128" height="128" fill="none" stroke="rgba(233,231,227,.09)" stroke-width="1"></rect>
+<line x1="64" y1="0" x2="64" y2="128" stroke="rgba(233,231,227,.09)" stroke-width="1"></line>
+<line x1="0" y1="64" x2="128" y2="64" stroke="rgba(233,231,227,.09)" stroke-width="1"></line>
+<circle cx="64" cy="64" r="50" fill="none" stroke="rgba(233,211,74,.2)" stroke-width="1"></circle>
+<circle cx="64" cy="64" r="43.5" fill="none" stroke="rgba(233,231,227,.09)" stroke-width="1"></circle>
+<g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g>
+<text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text>
+</svg>
+<span style="position:absolute;left:14px;bottom:12px;font:400 10px/1.5 'IBM Plex Mono',monospace;color:#5d6064">r 50 · stroke 13 · розрив 66/314 = 21%<br>ML · Plex Mono 700 · 38 · tracking −1,5</span>
+</div>
+<div style="max-width:380px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">розрив завжди вгорі, на 12 годині — як недомкнене кільце схожості в картці</div>
+</div>
+
+<div id="3b" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#3b" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">3b</a>Розмірна драбина й правило деградації</div>
+<div style="width:520px;height:300px;background:#0e0f12;border:1px solid #1e2228;border-radius:12px;display:flex;flex-direction:column;justify-content:center;gap:22px;padding:0 24px">
+<div style="display:flex;align-items:flex-end;gap:26px">
+<span style="display:flex;flex-direction:column;align-items:center;gap:9px"><svg width="16" height="16" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="17" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="15" fill="#e9d34a"></circle></svg><span style="font:400 9.5px/1 'IBM Plex Mono',monospace;color:#5d6064">16</span></span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:9px"><svg width="21" height="21" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="15" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="15" fill="#e9d34a"></circle></svg><span style="font:400 9.5px/1 'IBM Plex Mono',monospace;color:#5d6064">21</span></span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:9px"><svg width="28" height="28" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg><span style="font:400 9.5px/1 'IBM Plex Mono',monospace;color:#e9d34a">28</span></span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:9px"><svg width="44" height="44" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg><span style="font:400 9.5px/1 'IBM Plex Mono',monospace;color:#5d6064">44</span></span>
+<span style="display:flex;flex-direction:column;align-items:center;gap:9px"><svg width="72" height="72" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg><span style="font:400 9.5px/1 'IBM Plex Mono',monospace;color:#5d6064">72</span></span>
+</div>
+<div style="display:flex;gap:24px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">
+<span style="flex:1">до 24 px — крапка, товщина обведення 15–17<br>від 28 px — монограма, обведення 13</span>
+</div>
+</div>
+<div style="max-width:520px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">межа перемикання — 28 px: нижче літери зливаються в пляму й знак краще читається крапкою</div>
+</div>
+
+<div id="3c" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#3c" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">3c</a>Кольорові версії</div>
+<div style="width:520px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="height:132px;border-radius:12px;background:#0a0b0d;border:1px solid #1e2228;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px"><svg width="52" height="52" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg><span style="font:400 10px/1 'IBM Plex Mono',monospace;color:#5d6064">основна · #e9d34a на #08090b</span></div>
+<div style="height:132px;border-radius:12px;background:#e9d34a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px"><svg width="52" height="52" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#14130a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#14130a">ML</text></svg><span style="font:400 10px/1 'IBM Plex Mono',monospace;color:#5b5311">інверсія · #14130a на жовтому</span></div>
+<div style="height:132px;border-radius:12px;background:#f4f2ee;border:1px solid #e4e1da;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px"><svg width="52" height="52" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#1c1b19" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#1c1b19">ML</text></svg><span style="font:400 10px/1 'IBM Plex Mono',monospace;color:#8a8981">світла тема · #1c1b19</span></div>
+<div style="height:132px;border-radius:12px;background:#0e0f12;border:1px solid #1e2228;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px"><svg width="52" height="52" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9e7e3" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9e7e3">ML</text></svg><span style="font:400 10px/1 'IBM Plex Mono',monospace;color:#5d6064">монохром · для друку й гравіювання</span></div>
+</div>
+</div>
+
+<div id="3d" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#3d" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">3d</a>Локапи й відступ</div>
+<div style="width:454px;background:#0e0f12;border:1px solid #1e2228;border-radius:12px;overflow:hidden">
+<div style="padding:24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #16191e">
+<span style="padding:13px;box-shadow:inset 0 0 0 1px rgba(233,211,74,.16);border-radius:8px;display:flex"><svg width="42" height="42" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg></span>
+<div>
+<div style="font:600 21px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+<div style="margin-top:7px;font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#7e7f7b">ЛОКАЛЬНИЙ ПОШУК ПО МЕДІА</div>
+</div>
+</div>
+<div style="padding:24px;display:flex;flex-direction:column;align-items:center;gap:13px;background:#0a0b0d">
+<svg width="56" height="56" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg>
+<div style="font:600 17px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+</div>
+</div>
+<div style="max-width:454px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">вільне поле навколо знака — третина його висоти (тонка рамка на схемі); назва набирається Plex Sans 600 з крапкою-роздільником #6b6d70</div>
+</div>
+
+<div id="3e" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#3e" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">3e</a>У продукті</div>
+<div style="width:520px;display:flex;flex-direction:column;gap:12px">
+<div style="background:#0e0f12;border:1px solid #282c33;border-radius:10px;overflow:hidden">
+<div style="height:44px;display:flex;align-items:center;gap:3px;padding:0 12px;border-bottom:1px solid #23272e;background:linear-gradient(180deg,#191d23,#12141a)">
+<span style="display:flex;align-items:center;gap:8px;margin-right:12px"><svg width="21" height="21" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="15" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="15" fill="#e9d34a"></circle></svg><span style="font:600 11.5px/1 'IBM Plex Mono',monospace;letter-spacing:.02em;color:#b9b7b2">media-library</span></span>
+<span style="font:600 12.5px/1 'IBM Plex Sans',sans-serif;padding:7px 12px;border-radius:7px;background:rgba(233,211,74,.12);color:#f5edc4;box-shadow:inset 0 0 0 1px rgba(233,211,74,.42)">Пошук</span>
+<span style="font:500 12.5px/1 'IBM Plex Sans',sans-serif;padding:7px 11px;border-radius:7px;color:#a5a4a0">Додати</span>
+<span style="margin-left:auto;font:500 10.5px/1 'IBM Plex Mono',monospace;color:#8a8b87;padding:5px 7px;border-radius:5px;box-shadow:inset 0 0 0 1px #262b33">⌘K</span>
+</div>
+<div style="padding:15px 14px;font:400 10.5px/1 'IBM Plex Mono',monospace;color:#5d6064">шапка вікна · знак на 21 px, у режимі крапки</div>
+</div>
+<div style="display:flex;gap:12px">
+<div style="flex:1;background:#0a0b0d;border:1px solid #1e2228;border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:center;gap:12px">
+<span style="width:52px;height:52px;border-radius:13px;background:linear-gradient(150deg,#1d1f24,#0c0d10);box-shadow:inset 0 0 0 1px #2a2f37,0 6px 16px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center"><svg width="33" height="33" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg></span>
+<span style="font:400 10.5px/1.5 'IBM Plex Mono',monospace;color:#5d6064">іконка в доку<br>темна плитка</span>
+</div>
+<div style="flex:1;background:#f4f2ee;border:1px solid #e4e1da;border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:center;gap:12px">
+<span style="width:20px;height:20px;border-radius:5px;background:#1c1b19;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="18" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="15" fill="#e9d34a"></circle></svg></span>
+<span style="font:400 10.5px/1.5 'IBM Plex Mono',monospace;color:#8a8981">фавікон довідки<br>16 px, крапка</span>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<p style="margin:24px 0 0;font:400 12px/1.6 'IBM Plex Sans',sans-serif;color:#7e7f7b">Файли: <span style="font-family:'IBM Plex Mono',monospace;color:#c9c7c2">brand/ml-mark.svg</span> (повний) і <span style="font-family:'IBM Plex Mono',monospace;color:#c9c7c2">brand/ml-mark-small.svg</span> (до 24 px). Далі: «зроби анімовану появу знака» · «додай кільце як спінер пошуку» · «свотчі й гайд одним файлом»</p>
+</section>
+
+<section id="t2" style="padding:34px 48px 44px;border-bottom:1px solid rgba(233,231,227,.07)">
+<div style="display:flex;align-items:baseline;gap:10px;margin:0 0 8px">
+<a href="#t2" style="font:600 10px/1 'IBM Plex Mono',monospace;padding:4px 7px;background:#e9e7e3;color:#0e0f12;border-radius:4px">2</a>
+<span style="font:600 13px/1.2 'IBM Plex Sans',sans-serif;color:#e9e7e3">Кільце <a href="#1a">1a</a> × монограма <a href="#1d">1d</a></span>
+</div>
+<p style="margin:0 0 22px;max-width:720px;font:400 12.5px/1.6 'IBM Plex Sans',sans-serif;color:#8a8b87;text-wrap:pretty">Літери й кільце сперечаються за той самий центр, тож у кожному варіанті одне з двох головне, а друге — оправа. І всюди однакове правило: нижче 24 px монограма випадає, лишається саме кільце — воно і є знак.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start">
+
+<div id="2a" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#2a" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">2a</a>Монограма в кільці</div>
+<div style="width:454px;background:#0e0f12;border:1px solid #1e2228;border-radius:12px;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:center;height:210px;background:#0a0b0d">
+<svg width="128" height="128" viewBox="0 0 128 128" style="display:block">
+<g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g>
+<text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text>
+</svg>
+</div>
+<div style="display:flex;align-items:center;gap:16px;padding:18px 20px;border-top:1px solid #16191e">
+<svg width="38" height="38" viewBox="0 0 128 128" style="display:block;flex:none"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg>
+<div>
+<div style="font:600 19px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+<div style="margin-top:6px;font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#7e7f7b">ЛОКАЛЬНИЙ ПОШУК ПО МЕДІА</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid #16191e;background:#111317">
+<svg width="16" height="16" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="18" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="14" fill="#e9d34a"></circle></svg>
+<svg width="24" height="24" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="14" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="40" letter-spacing="-2" fill="#e9d34a">ML</text></svg>
+<span style="width:44px;height:44px;border-radius:11px;background:linear-gradient(150deg,#1d1f24,#0d0e11);box-shadow:inset 0 0 0 1px #2a2f37;display:flex;align-items:center;justify-content:center"><svg width="28" height="28" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg></span>
+<span style="width:44px;height:44px;border-radius:11px;background:#e9d34a;display:flex;align-items:center;justify-content:center"><svg width="28" height="28" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#14130a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#14130a">ML</text></svg></span>
+<span style="margin-left:auto;font:400 10.5px/1.4 'IBM Plex Mono',monospace;color:#5d6064;text-align:right">на 16 px — крапка<br>замість літер</span>
+</div>
+</div>
+<div style="max-width:454px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">кільце головне, літери заповнюють центр замість крапки · найближче до <a href="#1a">1a</a></div>
+</div>
+
+<div id="2b" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#2b" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">2b</a>Жовта плитка, кільце вирізане</div>
+<div style="width:454px;background:#0e0f12;border:1px solid #1e2228;border-radius:12px;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:center;height:210px;background:#0a0b0d">
+<span style="width:128px;height:128px;border-radius:32px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center">
+<svg width="92" height="92" viewBox="0 0 128 128" style="display:block">
+<g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#14130a" stroke-width="12" stroke-linecap="round" stroke-dasharray="248 66"></circle></g>
+<text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#14130a">ML</text>
+</svg>
+</span>
+</div>
+<div style="display:flex;align-items:center;gap:16px;padding:18px 20px;border-top:1px solid #16191e">
+<span style="width:38px;height:38px;flex:none;border-radius:10px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center"><svg width="27" height="27" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#14130a" stroke-width="12" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#14130a">ML</text></svg></span>
+<div>
+<div style="font:600 19px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+<div style="margin-top:6px;font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#7e7f7b">ЛОКАЛЬНИЙ ПОШУК ПО МЕДІА</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid #16191e;background:#111317">
+<span style="width:16px;height:16px;border-radius:4px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#14130a" stroke-width="20" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="13" fill="#14130a"></circle></svg></span>
+<span style="width:24px;height:24px;border-radius:6px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#14130a" stroke-width="14" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="40" letter-spacing="-2" fill="#14130a">ML</text></svg></span>
+<span style="width:44px;height:44px;border-radius:11px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center"><svg width="31" height="31" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#14130a" stroke-width="12" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#14130a">ML</text></svg></span>
+<span style="width:44px;height:44px;border-radius:11px;background:#14130a;box-shadow:inset 0 0 0 1px #2a2f37;display:flex;align-items:center;justify-content:center"><svg width="31" height="31" viewBox="0 0 128 128" style="display:block"><g transform="rotate(-90 64 64)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="12" stroke-linecap="round" stroke-dasharray="248 66"></circle></g><text x="64" y="64" text-anchor="middle" dominant-baseline="central" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="38" letter-spacing="-1.5" fill="#e9d34a">ML</text></svg></span>
+<span style="margin-left:auto;font:400 10.5px/1.4 'IBM Plex Mono',monospace;color:#5d6064;text-align:right">плитка тримає<br>жовту пляму в доку</span>
+</div>
+</div>
+<div style="max-width:454px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">найгучніший у доку: суцільний жовтий квадрат упізнається серед іконок здалеку</div>
+</div>
+
+<div id="2c" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#2c" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">2c</a>Кільце як літера — ML збоку</div>
+<div style="width:454px;background:#0e0f12;border:1px solid #1e2228;border-radius:12px;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:center;height:210px;background:#0a0b0d;gap:2px">
+<span style="font:700 78px/1 'IBM Plex Mono',monospace;letter-spacing:-.06em;color:#e9e7e3">M</span>
+<svg width="74" height="74" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="15" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="17" fill="#e9d34a"></circle></svg>
+</div>
+<div style="display:flex;align-items:center;gap:16px;padding:18px 20px;border-top:1px solid #16191e">
+<span style="display:flex;align-items:center;gap:1px;flex:none"><span style="font:700 26px/1 'IBM Plex Mono',monospace;letter-spacing:-.06em;color:#e9e7e3">M</span><svg width="25" height="25" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="15" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="17" fill="#e9d34a"></circle></svg></span>
+<div>
+<div style="font:600 19px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+<div style="margin-top:6px;font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#7e7f7b">ЛОКАЛЬНИЙ ПОШУК ПО МЕДІА</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid #16191e;background:#111317">
+<svg width="16" height="16" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="18" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="14" fill="#e9d34a"></circle></svg>
+<span style="display:flex;align-items:center;gap:1px"><span style="font:700 17px/1 'IBM Plex Mono',monospace;letter-spacing:-.06em;color:#e9e7e3">M</span><svg width="16" height="16" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="17" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="16" fill="#e9d34a"></circle></svg></span>
+<span style="width:44px;height:44px;border-radius:11px;background:linear-gradient(150deg,#1d1f24,#0d0e11);box-shadow:inset 0 0 0 1px #2a2f37;display:flex;align-items:center;justify-content:center;gap:1px"><span style="font:700 20px/1 'IBM Plex Mono',monospace;letter-spacing:-.06em;color:#e9e7e3">M</span><svg width="19" height="19" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="16" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="17" fill="#e9d34a"></circle></svg></span>
+<span style="width:44px;height:44px;border-radius:11px;background:#e9d34a;display:flex;align-items:center;justify-content:center;gap:1px"><span style="font:700 20px/1 'IBM Plex Mono',monospace;letter-spacing:-.06em;color:#14130a">M</span><svg width="19" height="19" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#14130a" stroke-width="16" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="17" fill="#14130a"></circle></svg></span>
+<span style="margin-left:auto;font:400 10.5px/1.4 'IBM Plex Mono',monospace;color:#5d6064;text-align:right">кільце стоїть<br>на місці «L»</span>
+</div>
+</div>
+<div style="max-width:454px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">літери й знак не накладаються, а стоять поруч: «M» біле, кільце жовте й читається як друга літера</div>
+</div>
+
+</div>
+<p style="margin:24px 0 0;font:400 12px/1.6 'IBM Plex Sans',sans-serif;color:#7e7f7b">Далі: «бери <a href="#2a">2a</a>, зроби літери світлими» · «<a href="#2b">2b</a> без градієнта, плоский жовтий» · «<a href="#2c">2c</a> у горизонтальний лockup із назвою»</p>
+</section>
+
+<section id="t1" style="padding:34px 48px 44px;border-bottom:1px solid rgba(233,231,227,.07)">
+<div style="display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start">
+
+<div id="1a" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#1a" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">1a</a>Кільце — розірваний контур схожості</div>
+<div style="width:454px;background:#0e0f12;border:1px solid #1e2228;border-radius:12px;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:center;height:210px;background:#0a0b0d">
+<svg width="128" height="128" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)">
+<circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle>
+<circle cx="64" cy="64" r="16" fill="#e9d34a"></circle>
+</svg>
+</div>
+<div style="display:flex;align-items:center;gap:16px;padding:18px 20px;border-top:1px solid #16191e">
+<svg width="38" height="38" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg);flex:none"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="16" fill="#e9d34a"></circle></svg>
+<div>
+<div style="font:600 19px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+<div style="margin-top:6px;font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#7e7f7b">ЛОКАЛЬНИЙ ПОШУК ПО МЕДІА</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid #16191e;background:#111317">
+<svg width="16" height="16" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="18" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="14" fill="#e9d34a"></circle></svg>
+<svg width="24" height="24" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="15" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="15" fill="#e9d34a"></circle></svg>
+<span style="width:44px;height:44px;border-radius:11px;background:linear-gradient(150deg,#1d1f24,#0d0e11);box-shadow:inset 0 0 0 1px #2a2f37;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="14" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="15" fill="#e9d34a"></circle></svg></span>
+<span style="width:44px;height:44px;border-radius:11px;background:#e9d34a;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#14130a" stroke-width="14" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="15" fill="#14130a"></circle></svg></span>
+<span style="margin-left:auto;font:400 10.5px/1.4 'IBM Plex Mono',monospace;color:#5d6064;text-align:right">16 · 24 · іконка<br>розрив завжди вгорі</span>
+</div>
+</div>
+<div style="max-width:454px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">той самий елемент, що стоїть на кожній картці видачі — знак дослівно цитує головну механіку продукту</div>
+</div>
+
+<div id="1b" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#1b" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">1b</a>Стопка — чотири типи медіа в одній сітці</div>
+<div style="width:454px;background:#0e0f12;border:1px solid #1e2228;border-radius:12px;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:center;height:210px;background:#0a0b0d">
+<svg width="128" height="128" viewBox="0 0 128 128" style="display:block">
+<rect x="10" y="10" width="50" height="50" rx="9" fill="#e9d34a"></rect>
+<rect x="68" y="10" width="50" height="50" rx="9" fill="#e9d34a" opacity=".55"></rect>
+<rect x="10" y="68" width="50" height="50" rx="9" fill="#e9d34a" opacity=".3"></rect>
+<rect x="68" y="68" width="50" height="50" rx="25" fill="none" stroke="#e9d34a" stroke-width="11"></rect>
+</svg>
+</div>
+<div style="display:flex;align-items:center;gap:16px;padding:18px 20px;border-top:1px solid #16191e">
+<svg width="38" height="38" viewBox="0 0 128 128" style="display:block;flex:none"><rect x="10" y="10" width="50" height="50" rx="9" fill="#e9d34a"></rect><rect x="68" y="10" width="50" height="50" rx="9" fill="#e9d34a" opacity=".55"></rect><rect x="10" y="68" width="50" height="50" rx="9" fill="#e9d34a" opacity=".3"></rect><rect x="68" y="68" width="50" height="50" rx="25" fill="none" stroke="#e9d34a" stroke-width="11"></rect></svg>
+<div>
+<div style="font:600 19px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+<div style="margin-top:6px;font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#7e7f7b">ЛОКАЛЬНИЙ ПОШУК ПО МЕДІА</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid #16191e;background:#111317">
+<svg width="16" height="16" viewBox="0 0 128 128" style="display:block"><rect x="8" y="8" width="52" height="52" rx="10" fill="#e9d34a"></rect><rect x="68" y="8" width="52" height="52" rx="10" fill="#e9d34a" opacity=".55"></rect><rect x="8" y="68" width="52" height="52" rx="10" fill="#e9d34a" opacity=".3"></rect><rect x="68" y="68" width="52" height="52" rx="26" fill="none" stroke="#e9d34a" stroke-width="14"></rect></svg>
+<svg width="24" height="24" viewBox="0 0 128 128" style="display:block"><rect x="9" y="9" width="51" height="51" rx="10" fill="#e9d34a"></rect><rect x="68" y="9" width="51" height="51" rx="10" fill="#e9d34a" opacity=".55"></rect><rect x="9" y="68" width="51" height="51" rx="10" fill="#e9d34a" opacity=".3"></rect><rect x="68" y="68" width="51" height="51" rx="26" fill="none" stroke="#e9d34a" stroke-width="12"></rect></svg>
+<span style="width:44px;height:44px;border-radius:11px;background:linear-gradient(150deg,#1d1f24,#0d0e11);box-shadow:inset 0 0 0 1px #2a2f37;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 128 128" style="display:block"><rect x="9" y="9" width="51" height="51" rx="10" fill="#e9d34a"></rect><rect x="68" y="9" width="51" height="51" rx="10" fill="#e9d34a" opacity=".55"></rect><rect x="9" y="68" width="51" height="51" rx="10" fill="#e9d34a" opacity=".3"></rect><rect x="68" y="68" width="51" height="51" rx="26" fill="none" stroke="#e9d34a" stroke-width="12"></rect></svg></span>
+<span style="width:44px;height:44px;border-radius:11px;background:#e9d34a;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 128 128" style="display:block"><rect x="9" y="9" width="51" height="51" rx="10" fill="#14130a"></rect><rect x="68" y="9" width="51" height="51" rx="10" fill="#14130a" opacity=".55"></rect><rect x="9" y="68" width="51" height="51" rx="10" fill="#14130a" opacity=".3"></rect><rect x="68" y="68" width="51" height="51" rx="26" fill="none" stroke="#14130a" stroke-width="12"></rect></svg></span>
+<span style="margin-left:auto;font:400 10.5px/1.4 'IBM Plex Mono',monospace;color:#5d6064;text-align:right">16 · 24 · іконка<br>кружок = аудіо</span>
+</div>
+</div>
+<div style="max-width:454px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">квадрати — картинка, відео, текст; кільце — аудіо. три щаблі прозорості = три щаблі релевантності</div>
+</div>
+
+<div id="1c" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#1c" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">1c</a>Хвиля — сплеск на місці збігу</div>
+<div style="width:454px;background:#0e0f12;border:1px solid #1e2228;border-radius:12px;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:center;height:210px;background:#0a0b0d">
+<svg width="128" height="128" viewBox="0 0 128 128" style="display:block">
+<rect x="8" y="52" width="14" height="24" rx="7" fill="#e9d34a" opacity=".32"></rect>
+<rect x="30" y="38" width="14" height="52" rx="7" fill="#e9d34a" opacity=".32"></rect>
+<rect x="52" y="10" width="14" height="108" rx="7" fill="#e9d34a"></rect>
+<rect x="74" y="30" width="14" height="68" rx="7" fill="#e9d34a" opacity=".62"></rect>
+<rect x="96" y="48" width="14" height="32" rx="7" fill="#e9d34a" opacity=".32"></rect>
+</svg>
+</div>
+<div style="display:flex;align-items:center;gap:16px;padding:18px 20px;border-top:1px solid #16191e">
+<svg width="38" height="38" viewBox="0 0 128 128" style="display:block;flex:none"><rect x="8" y="52" width="14" height="24" rx="7" fill="#e9d34a" opacity=".32"></rect><rect x="30" y="38" width="14" height="52" rx="7" fill="#e9d34a" opacity=".32"></rect><rect x="52" y="10" width="14" height="108" rx="7" fill="#e9d34a"></rect><rect x="74" y="30" width="14" height="68" rx="7" fill="#e9d34a" opacity=".62"></rect><rect x="96" y="48" width="14" height="32" rx="7" fill="#e9d34a" opacity=".32"></rect></svg>
+<div>
+<div style="font:600 19px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+<div style="margin-top:6px;font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#7e7f7b">ЛОКАЛЬНИЙ ПОШУК ПО МЕДІА</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid #16191e;background:#111317">
+<svg width="16" height="16" viewBox="0 0 128 128" style="display:block"><rect x="8" y="52" width="16" height="24" rx="8" fill="#e9d34a" opacity=".32"></rect><rect x="32" y="38" width="16" height="52" rx="8" fill="#e9d34a" opacity=".32"></rect><rect x="56" y="10" width="16" height="108" rx="8" fill="#e9d34a"></rect><rect x="80" y="30" width="16" height="68" rx="8" fill="#e9d34a" opacity=".62"></rect><rect x="104" y="48" width="16" height="32" rx="8" fill="#e9d34a" opacity=".32"></rect></svg>
+<svg width="24" height="24" viewBox="0 0 128 128" style="display:block"><rect x="8" y="52" width="15" height="24" rx="7.5" fill="#e9d34a" opacity=".32"></rect><rect x="31" y="38" width="15" height="52" rx="7.5" fill="#e9d34a" opacity=".32"></rect><rect x="54" y="10" width="15" height="108" rx="7.5" fill="#e9d34a"></rect><rect x="77" y="30" width="15" height="68" rx="7.5" fill="#e9d34a" opacity=".62"></rect><rect x="100" y="48" width="15" height="32" rx="7.5" fill="#e9d34a" opacity=".32"></rect></svg>
+<span style="width:44px;height:44px;border-radius:11px;background:linear-gradient(150deg,#1d1f24,#0d0e11);box-shadow:inset 0 0 0 1px #2a2f37;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 128 128" style="display:block"><rect x="8" y="52" width="15" height="24" rx="7.5" fill="#e9d34a" opacity=".32"></rect><rect x="31" y="38" width="15" height="52" rx="7.5" fill="#e9d34a" opacity=".32"></rect><rect x="54" y="10" width="15" height="108" rx="7.5" fill="#e9d34a"></rect><rect x="77" y="30" width="15" height="68" rx="7.5" fill="#e9d34a" opacity=".62"></rect><rect x="100" y="48" width="15" height="32" rx="7.5" fill="#e9d34a" opacity=".32"></rect></svg></span>
+<span style="width:44px;height:44px;border-radius:11px;background:#e9d34a;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 128 128" style="display:block"><rect x="8" y="52" width="15" height="24" rx="7.5" fill="#14130a" opacity=".38"></rect><rect x="31" y="38" width="15" height="52" rx="7.5" fill="#14130a" opacity=".38"></rect><rect x="54" y="10" width="15" height="108" rx="7.5" fill="#14130a"></rect><rect x="77" y="30" width="15" height="68" rx="7.5" fill="#14130a" opacity=".66"></rect><rect x="100" y="48" width="15" height="32" rx="7.5" fill="#14130a" opacity=".38"></rect></svg></span>
+<span style="margin-left:auto;font:400 10.5px/1.4 'IBM Plex Mono',monospace;color:#5d6064;text-align:right">16 · 24 · іконка<br>центр завжди повний</span>
+</div>
+</div>
+<div style="max-width:454px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">найкраще читається на 16 px, але говорить радше про звук, ніж про всю бібліотеку</div>
+</div>
+
+<div id="1d" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#1d" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">1d</a>Монограма — та, що вже стоїть у шапці вікна</div>
+<div style="width:454px;background:#0e0f12;border:1px solid #1e2228;border-radius:12px;overflow:hidden">
+<div style="display:flex;align-items:center;justify-content:center;height:210px;background:#0a0b0d">
+<span style="width:128px;height:128px;border-radius:32px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center;font:700 46px/1 'IBM Plex Mono',monospace;letter-spacing:-.04em;color:#14130a">ML</span>
+</div>
+<div style="display:flex;align-items:center;gap:16px;padding:18px 20px;border-top:1px solid #16191e">
+<span style="width:38px;height:38px;flex:none;border-radius:10px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center;font:700 14px/1 'IBM Plex Mono',monospace;letter-spacing:-.04em;color:#14130a">ML</span>
+<div>
+<div style="font:600 19px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+<div style="margin-top:6px;font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#7e7f7b">ЛОКАЛЬНИЙ ПОШУК ПО МЕДІА</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid #16191e;background:#111317">
+<span style="width:16px;height:16px;border-radius:4px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center;font:700 6.5px/1 'IBM Plex Mono',monospace;letter-spacing:-.04em;color:#14130a">ML</span>
+<span style="width:24px;height:24px;border-radius:6px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center;font:700 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:-.04em;color:#14130a">ML</span>
+<span style="width:44px;height:44px;border-radius:11px;background:linear-gradient(140deg,#f2e06a,#c9ab1f);display:flex;align-items:center;justify-content:center;font:700 17px/1 'IBM Plex Mono',monospace;letter-spacing:-.04em;color:#14130a">ML</span>
+<span style="width:44px;height:44px;border-radius:11px;background:#14130a;box-shadow:inset 0 0 0 1px #2a2f37;display:flex;align-items:center;justify-content:center;font:700 17px/1 'IBM Plex Mono',monospace;letter-spacing:-.04em;color:#e9d34a">ML</span>
+<span style="margin-left:auto;font:400 10.5px/1.4 'IBM Plex Mono',monospace;color:#5d6064;text-align:right">16 · 24 · іконка<br>на 16 px літери злипаються</span>
+</div>
+</div>
+<div style="max-width:454px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">найпростіше в реалізації і вже живе в продукті, але нічого не розповідає про пошук</div>
+</div>
+
+</div>
+
+<div style="margin-top:34px;display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start">
+
+<div id="1e" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#1e" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">1e</a>На світлому тлі — інверсія знака</div>
+<div style="width:454px;background:#f4f2ee;border:1px solid #e4e1da;border-radius:12px;padding:22px;display:flex;align-items:center;gap:26px">
+<svg width="52" height="52" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg);flex:none"><circle cx="64" cy="64" r="50" fill="none" stroke="#1c1b19" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="16" fill="#8a7212"></circle></svg>
+<svg width="52" height="52" viewBox="0 0 128 128" style="display:block;flex:none"><rect x="10" y="10" width="50" height="50" rx="9" fill="#1c1b19"></rect><rect x="68" y="10" width="50" height="50" rx="9" fill="#1c1b19" opacity=".55"></rect><rect x="10" y="68" width="50" height="50" rx="9" fill="#1c1b19" opacity=".3"></rect><rect x="68" y="68" width="50" height="50" rx="25" fill="none" stroke="#8a7212" stroke-width="11"></rect></svg>
+<svg width="52" height="52" viewBox="0 0 128 128" style="display:block;flex:none"><rect x="8" y="52" width="14" height="24" rx="7" fill="#1c1b19" opacity=".32"></rect><rect x="30" y="38" width="14" height="52" rx="7" fill="#1c1b19" opacity=".32"></rect><rect x="52" y="10" width="14" height="108" rx="7" fill="#8a7212"></rect><rect x="74" y="30" width="14" height="68" rx="7" fill="#1c1b19" opacity=".62"></rect><rect x="96" y="48" width="14" height="32" rx="7" fill="#1c1b19" opacity=".32"></rect></svg>
+<span style="width:52px;height:52px;flex:none;border-radius:13px;background:#1c1b19;display:flex;align-items:center;justify-content:center;font:700 19px/1 'IBM Plex Mono',monospace;letter-spacing:-.04em;color:#e9d34a">ML</span>
+</div>
+<div style="max-width:454px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">на світлому чистий жовтий не тримає контраст — знак стає чорним, жовтий лишається тільки акцентною деталлю (#8a7212 там, де потрібен колір)</div>
+</div>
+
+<div id="1f" style="flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px">
+<div style="display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 'IBM Plex Sans',sans-serif;color:#8a8b87"><a href="#1f" style="font:600 10.5px/1 'IBM Plex Mono',monospace;padding:3px 7px;background:rgba(233,231,227,.09);color:#e9e7e3;border-radius:5px">1f</a>У шапці вікна — як воно виглядає насправді</div>
+<div style="width:560px;background:#0e0f12;border:1px solid #282c33;border-radius:10px;overflow:hidden">
+<div style="height:44px;display:flex;align-items:center;gap:3px;padding:0 12px;border-bottom:1px solid #23272e;background:linear-gradient(180deg,#191d23,#12141a)">
+<span style="display:flex;align-items:center;gap:8px;margin-right:12px">
+<svg width="21" height="21" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="15" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="15" fill="#e9d34a"></circle></svg>
+<span style="font:600 11.5px/1 'IBM Plex Mono',monospace;letter-spacing:.02em;color:#b9b7b2">media-library</span>
+</span>
+<span style="font:600 12.5px/1 'IBM Plex Sans',sans-serif;padding:7px 12px;border-radius:7px;background:rgba(233,211,74,.12);color:#f5edc4;box-shadow:inset 0 0 0 1px rgba(233,211,74,.42)">Пошук</span>
+<span style="font:500 12.5px/1 'IBM Plex Sans',sans-serif;padding:7px 11px;border-radius:7px;color:#a5a4a0">Додати</span>
+<span style="font:500 12.5px/1 'IBM Plex Sans',sans-serif;padding:7px 11px;border-radius:7px;color:#a5a4a0">Черга</span>
+</div>
+<div style="padding:16px 14px;display:flex;flex-direction:column;align-items:center;gap:13px">
+<div style="font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:rgba(233,211,74,.62)">ВІКНО ABOUT</div>
+<svg width="64" height="64" viewBox="0 0 128 128" style="display:block;transform:rotate(-90deg)"><circle cx="64" cy="64" r="50" fill="none" stroke="#e9d34a" stroke-width="13" stroke-linecap="round" stroke-dasharray="248 66"></circle><circle cx="64" cy="64" r="16" fill="#e9d34a"></circle></svg>
+<div style="font:600 16px/1 'IBM Plex Sans',sans-serif;color:#e9e7e3;letter-spacing:-.02em">media<span style="color:#6b6d70">·</span>library</div>
+<div style="font:400 10.5px/1.5 'IBM Plex Mono',monospace;color:#6b6d70;text-align:center">версія 1.0 · працює офлайн<br>жодні дані не залишають цю машину</div>
+</div>
+</div>
+<div style="max-width:560px;font:400 11px/1.6 'IBM Plex Mono',monospace;color:#5d6064">на 21 px у шапці кільце лишається кільцем — саме той розмір, де монограма вже нечитна</div>
+</div>
+
+</div>
+
+<p style="margin:26px 0 0;font:400 12px/1.6 'IBM Plex Sans',sans-serif;color:#7e7f7b">Далі: «бери <a href="#1a">1a</a>, але розрив праворуч» · «покажи <a href="#1b">1b</a> у теплішому жовтому» · «змішай кільце <a href="#1a">1a</a> із сіткою <a href="#1b">1b</a>»</p>
+</section>
+</x-dc>
+</body>
+</html>

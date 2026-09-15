@@ -7,7 +7,6 @@ import json
 import logging
 import mimetypes
 import shutil
-import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,7 +14,7 @@ from pathlib import Path
 from PIL import Image, ImageOps
 
 from ..config import get_settings
-from .media_tools import ffprobe
+from .media_tools import ffprobe, run
 
 log = logging.getLogger(__name__)
 
@@ -87,10 +86,9 @@ def default_label(*, path: Path | None = None, text: str | None = None, words: i
 
 
 def _ffprobe(path: Path) -> dict:
-    result = subprocess.run(
+    result = run(
         [ffprobe(), "-v", "error", "-print_format", "json",
-         "-show_format", "-show_streams", str(path)],
-        capture_output=True, text=True, check=False,
+         "-show_format", "-show_streams", str(path)]
     )
     if result.returncode != 0:
         log.warning("ffprobe не зміг прочитати %s: %s", path.name, result.stderr.strip()[:200])

@@ -97,7 +97,8 @@ export function ViewerScreen({
   const [draftTags, setDraftTags] = useState<string[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [denoise, setDenoise] = useState(false);
+  const [denoise, setDenoise] = useState("");
+  const [preparing, setPreparing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exported, setExported] = useState<{ path: string; name: string } | null>(null);
   const mediaRef = useRef<HTMLVideoElement & HTMLAudioElement>(null);
@@ -165,6 +166,36 @@ export function ViewerScreen({
     } finally {
       setExporting(false);
     }
+  };
+
+  /** Що саме зараз звучить: оригінал чи оброблений варіант. */
+  const audioSource =
+    item && denoise && (item.kind === "audio" || item.kind === "video")
+      ? api.previewUrl(item.id, denoise)
+      : (item?.media_url ?? undefined);
+
+  /** Перемикання рівня не має скидати місце відтворення: інакше порівняти
+   *  два варіанти на слух неможливо — щоразу починалося б спочатку. */
+  const chooseLevel = (level: string) => {
+    const media = mediaRef.current;
+    const at = media ? media.currentTime : 0;
+    const playing = media ? !media.paused : false;
+
+    setPreparing(level !== "");
+    setDenoise(level);
+    setExported(null);
+
+    window.setTimeout(() => {
+      const next = mediaRef.current;
+      if (!next) return;
+      const restore = () => {
+        next.currentTime = at;
+        if (playing) void next.play();
+        setPreparing(false);
+        next.removeEventListener("loadeddata", restore);
+      };
+      next.addEventListener("loadeddata", restore);
+    }, 0);
   };
 
   const seekToMatch = () => {
@@ -238,21 +269,35 @@ export function ViewerScreen({
           {error && <span className="text-[11px] text-error">{error}</span>}
 
           {(item.kind === "audio" || item.kind === "video") && (
-            <label
-              className="flex items-center gap-1.5 text-[12px] text-ink-dim"
-              title="Прибрати фоновий шум із звуку: гул, шипіння, стрибки гучності"
-            >
-              <input
-                type="checkbox"
-                checked={denoise}
-                onChange={(e) => {
-                  setDenoise(e.target.checked);
-                  setExported(null);
-                }}
-                className="accent-[var(--color-accent)]"
-              />
-              без шуму
-            </label>
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] text-ink-faint">шум:</span>
+              {(
+                [
+                  ["", "лишити"],
+                  ["light", "трохи"],
+                  ["medium", "більше"],
+                  ["strong", "сильно"],
+                ] as const
+              ).map(([level, title]) => (
+                <button
+                  key={level || "off"}
+                  type="button"
+                  onClick={() => chooseLevel(level)}
+                  disabled={preparing}
+                  className={clsx(
+                    "rounded px-1.5 py-1 text-[11px] transition-colors disabled:opacity-40",
+                    denoise === level
+                      ? "bg-accent font-medium text-ground"
+                      : "border border-line bg-surface text-ink-dim hover:text-ink",
+                  )}
+                >
+                  {title}
+                </button>
+              ))}
+              {preparing && (
+                <span className="ml-1 text-[11px] text-ink-faint">обробляємо…</span>
+              )}
+            </div>
           )}
           <button
             type="button"
@@ -326,15 +371,30 @@ export function ViewerScreen({
             />
           )}
           {item.kind === "video" && item.media_url && (
-            <video
-              ref={mediaRef}
-              src={item.media_url}
-              controls
-              className="max-h-full max-w-full"
-            />
+            <div className="flex max-h-full max-w-full flex-col items-center gap-2">
+              <video
+                ref={denoise ? undefined : mediaRef}
+                src={item.media_url}
+                controls
+                className="max-h-full max-w-full"
+              />
+              {denoise && (
+                <div className="w-full">
+                  <div className="mb-1 text-center text-[11px] text-ink-faint">
+                    оброблений звук окремо — відео лишається з оригінальним
+                  </div>
+                  <audio
+                    ref={mediaRef}
+                    src={audioSource}
+                    controls
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </div>
           )}
           {item.kind === "audio" && item.media_url && (
-            <audio ref={mediaRef} src={item.media_url} controls className="w-[70%]" />
+            <audio ref={mediaRef} src={audioSource} controls className="w-[70%]" />
           )}
           {item.kind === "text" && (
             <div className="selectable font-serif h-full w-full max-w-[680px] overflow-y-auto p-6 text-[13.5px] leading-[1.75] text-ink">

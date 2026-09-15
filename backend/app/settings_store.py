@@ -22,7 +22,8 @@ log = logging.getLogger(__name__)
 # Лише ці поля користувач може змінювати з інтерфейсу. Білий список тут
 # свідомий: інакше будь-яке поле конфігурації (включно зі шляхами) можна було б
 # перезаписати через HTTP.
-EDITABLE = {"asr_model", "device", "theme", "max_frames_per_video", "snippet_words"}
+EDITABLE = {"asr_model", "device", "theme", "max_frames_per_video",
+            "snippet_words", "download_dir"}
 
 ASR_MODELS = ("tiny", "base", "small", "medium", "large-v3-turbo")
 DEVICES = ("auto", "cuda", "cpu")
@@ -68,6 +69,8 @@ def current() -> dict[str, Any]:
         "theme": _extra.get("theme", "dark"),
         "max_frames_per_video": settings.max_frames_per_video,
         "snippet_words": settings.snippet_words,
+        "download_dir": settings.download_dir,
+        "download_dir_effective": str(_effective_download_dir()),
         "app_version": APP_VERSION,
         "schema_version": SCHEMA_VERSION,
         "available": {
@@ -78,6 +81,12 @@ def current() -> dict[str, Any]:
     }
 
 
+def _effective_download_dir():
+    from .ingest.export import default_target_dir
+
+    return default_target_dir()
+
+
 def _validate(key: str, value: Any) -> Any:
     if key == "asr_model" and value not in ASR_MODELS:
         raise ValueError(f"Невідома модель розпізнавання: {value}")
@@ -85,6 +94,13 @@ def _validate(key: str, value: Any) -> Any:
         raise ValueError(f"Невідомий пристрій: {value}")
     if key == "theme" and value not in THEMES:
         raise ValueError(f"Невідома тема: {value}")
+    if key == "download_dir" and value:
+        from pathlib import Path
+
+        path = Path(value).expanduser()
+        if not path.is_dir():
+            raise ValueError(f"Теки не існує: {value}")
+        return str(path)
     if key in ("max_frames_per_video", "snippet_words"):
         value = int(value)
         if value < 1:

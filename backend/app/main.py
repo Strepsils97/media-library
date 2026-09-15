@@ -23,6 +23,20 @@ from .worker import queue
 
 log = logging.getLogger(__name__)
 
+# Вікно застосунку. Потрібне, щоб показати системний діалог вибору теки:
+# інакше довелося б просити користувача вписувати шлях руками.
+_window = None
+
+
+def pick_folder(title: str = "Оберіть теку") -> str | None:
+    """Системний діалог вибору теки. None — якщо скасували або вікна немає."""
+    if _window is None:
+        return None
+    import webview
+
+    chosen = _window.create_file_dialog(webview.FOLDER_DIALOG)
+    return chosen[0] if chosen else None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -103,7 +117,8 @@ def run() -> None:
     # ззовні, ані зрозуміти з логу, що саме він слухав.
     log.info("Інтерфейс: http://127.0.0.1:%d", port)
 
-    webview.create_window(
+    global _window
+    _window = webview.create_window(
         "media-library",
         f"http://127.0.0.1:{port}",
         width=1400,

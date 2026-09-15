@@ -114,6 +114,10 @@ export interface UserSettings {
   theme: "dark" | "light";
   max_frames_per_video: number;
   snippet_words: number;
+  /** Обрана тека для збережених файлів. Порожньо — тека завантажень. */
+  download_dir: string;
+  /** Куди насправді потраплять файли з урахуванням запасного варіанта. */
+  download_dir_effective: string;
   available: {
     asr_models: string[];
     devices: string[];
