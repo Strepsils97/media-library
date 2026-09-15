@@ -126,7 +126,10 @@ def run() -> None:
         min_size=(940, 620),
         background_color="#08090b",
     )
-    webview.start()
+    # Іконку вікна на Windows дає сам екзешник; у режимі розробки її нема
+    # звідки взяти, тож підказуємо файлом.
+    icon = get_settings().icon_path
+    webview.start(icon=str(icon) if icon.exists() else None)
     server.should_exit = True
 
 

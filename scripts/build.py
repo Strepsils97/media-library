@@ -95,6 +95,7 @@ def main() -> None:
         "sqlite-vec": INTERNAL / "sqlite_vec" / "vec0.dll",
         "ffmpeg": INTERNAL / "ffmpeg.exe",
         "deep-filter": INTERNAL / "deep-filter.exe",
+        "знак": INTERNAL / "brand" / "media-library.ico",
         "CUDA": INTERNAL / "cuda" / "cublas64_12.dll",
         "SigLIP": target / "local" / "siglip" / "config.json",
         "NLLB-CLIP": target / "local" / "nllbclip" / "open_clip_pytorch_model.bin",

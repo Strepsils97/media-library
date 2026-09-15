@@ -2,6 +2,7 @@ import clsx from "clsx";
 import type { ReactNode } from "react";
 
 import type { LibraryStats, RuntimeStatus } from "../types";
+import { Mark } from "./Mark";
 
 export type Screen = "search" | "add" | "queue" | "tags" | "settings";
 
@@ -44,9 +45,7 @@ export function AppShell({ screen, onScreen, stats, runtime, children }: Props) 
     <div className="flex h-full flex-col bg-ground">
       <header className="flex shrink-0 items-center gap-1 border-b border-line bg-canvas px-3">
         <div className="mr-3 flex items-center gap-2 py-2.5">
-          <span className="tnum grid h-[22px] w-[22px] place-items-center rounded bg-accent text-[10px] font-semibold text-ground">
-            ML
-          </span>
+          <Mark size={21} className="text-accent" />
           <span className="text-[13px] font-semibold tracking-tight text-ink">
             media-library
           </span>

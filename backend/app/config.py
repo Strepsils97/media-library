@@ -100,6 +100,14 @@ class Settings(BaseSettings):
     def frontend_dir(self) -> Path:
         return self.bundled_dir / "frontend" / "dist"
 
+    @property
+    def icon_path(self) -> Path:
+        """Знак застосунку. У збірці лежить поруч, у розробці — у brand/."""
+        bundled = self.bundled_dir / "brand" / "media-library.ico"
+        if bundled.exists():
+            return bundled
+        return Path(__file__).resolve().parents[2] / "brand" / "media-library.ico"
+
     def ensure_dirs(self) -> None:
         for path in (
             self.data_dir,

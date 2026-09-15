@@ -6,10 +6,12 @@ node_modules/
 dist/
 build/
 *.spec
+!media-library.spec
 .env
 .DS_Store
 .pytest_cache/
 samples/
-design.dc.html
+*.dc.html
 samples/
 *.output
+tools/
