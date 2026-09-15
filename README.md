@@ -13,7 +13,13 @@
 dist/media-library/media-library.exe
 ```
 
-Ярлик є на робочому столі. Бібліотека створюється у `dist/media-library/data`
+Ярлик на робочому столі створюється скриптом:
+
+```
+powershell -ExecutionPolicy Bypass -File scripts/create_shortcut.ps1
+```
+
+Бібліотека створюється у `dist/media-library/data`
 поруч із виконуваним файлом; моделі вшиті у збірку, інтернет не потрібен.
 
 Перший запуск триває довше: близько 4 ГБ ваг читаються з диска у пам'ять
