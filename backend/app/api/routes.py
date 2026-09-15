@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from .. import settings_store
 from ..config import get_settings
 from ..db import backup, repo
-from ..ingest import storage
+from ..ingest import export, storage
 from ..ingest.pipeline import index_text
 from ..ml.cuda import resolve_device
 from ..search.query import Filters, search
@@ -52,6 +52,14 @@ class SettingsPatch(BaseModel):
     theme: str | None = None
     max_frames_per_video: int | None = None
     snippet_words: int | None = None
+
+
+class ExportRequest(BaseModel):
+    denoise: bool = False
+
+
+class RevealRequest(BaseModel):
+    path: str
 
 
 class ItemPatch(BaseModel):
@@ -322,6 +330,39 @@ def patch_item(item_id: int, request: ItemPatch) -> dict:
         index_text(item_id, request.transcript)
 
     return _item_payload(repo.get_item(item_id))
+
+
+@router.post("/items/{item_id}/export")
+def export_item(item_id: int, request: ExportRequest) -> dict:
+    """Кладе копію запису в теку завантажень, за потреби — з очищеним звуком."""
+    item = repo.get_item(item_id)
+    if item is None:
+        raise HTTPException(404, "Запис не знайдено")
+
+    try:
+        path = export.export_item(item, denoise=request.denoise)
+    except export.ExportFailed as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    return {"path": str(path), "name": path.name, "denoised": request.denoise}
+
+
+@router.post("/reveal")
+def reveal_file(request: RevealRequest) -> dict:
+    """Показує щойно збережений файл у провіднику."""
+    path = Path(request.path)
+    target_dir = export.default_target_dir().resolve()
+
+    # Шлях приходить від клієнта, тож показуємо лише те, що самі й зберегли:
+    # відкривати провідник на будь-якому шляху з мережевого запиту не варто.
+    try:
+        inside = path.resolve().is_relative_to(target_dir)
+    except OSError:
+        inside = False
+    if not inside:
+        raise HTTPException(400, "Показати можна лише збережений цим застосунком файл")
+
+    return {"revealed": export.reveal(path)}
 
 
 @router.delete("/items/{item_id}")

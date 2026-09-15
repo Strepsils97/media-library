@@ -97,12 +97,16 @@ export function ViewerScreen({
   const [draftTags, setDraftTags] = useState<string[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [denoise, setDenoise] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exported, setExported] = useState<{ path: string; name: string } | null>(null);
   const mediaRef = useRef<HTMLVideoElement & HTMLAudioElement>(null);
 
   useEffect(() => {
     setItem(null);
     setEditing(false);
     setError(null);
+    setExported(null);
     api.item(hit.item_id).then(setItem).catch((e) => setError((e as Error).message));
   }, [hit.item_id]);
 
@@ -147,6 +151,19 @@ export function ViewerScreen({
       onChanged();
     } catch (e) {
       setError((e as Error).message);
+    }
+  };
+
+  const save = async () => {
+    if (!item) return;
+    setExporting(true);
+    setError(null);
+    try {
+      setExported(await api.exportItem(item.id, denoise));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -219,6 +236,33 @@ export function ViewerScreen({
 
         <div className="ml-auto flex items-center gap-2">
           {error && <span className="text-[11px] text-error">{error}</span>}
+
+          {(item.kind === "audio" || item.kind === "video") && (
+            <label
+              className="flex items-center gap-1.5 text-[12px] text-ink-dim"
+              title="Прибрати фоновий шум із звуку: гул, шипіння, стрибки гучності"
+            >
+              <input
+                type="checkbox"
+                checked={denoise}
+                onChange={(e) => {
+                  setDenoise(e.target.checked);
+                  setExported(null);
+                }}
+                className="accent-[var(--color-accent)]"
+              />
+              без шуму
+            </label>
+          )}
+          <button
+            type="button"
+            onClick={save}
+            disabled={exporting}
+            className="rounded border border-line bg-surface px-2.5 py-1 text-[12px] text-ink-dim hover:border-line-2 hover:text-ink disabled:opacity-40"
+          >
+            {exporting ? "Зберігаємо…" : "Завантажити"}
+          </button>
+
           <button
             type="button"
             onClick={editing ? saveEdits : startEditing}
@@ -249,6 +293,28 @@ export function ViewerScreen({
           </button>
         </div>
       </div>
+
+      {exported && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface px-4 py-1.5">
+          <span className="tnum min-w-0 truncate text-[11px] text-ink-dim">
+            Збережено: {exported.name}
+          </span>
+          <button
+            type="button"
+            onClick={() => api.reveal(exported.path).catch(() => undefined)}
+            className="shrink-0 text-[11px] text-accent hover:underline"
+          >
+            Показати в теці
+          </button>
+          <button
+            type="button"
+            onClick={() => setExported(null)}
+            className="ml-auto shrink-0 text-[11px] text-ink-faint hover:text-ink"
+          >
+            Сховати
+          </button>
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1">
         <div className="grid min-w-0 flex-1 place-items-center bg-stage p-4">

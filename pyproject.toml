@@ -37,6 +37,9 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "slow: тест запускає ffmpeg або інші зовнішні інструменти",
+]
 
 [tool.ruff]
 line-length = 100

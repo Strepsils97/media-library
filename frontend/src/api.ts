@@ -57,6 +57,16 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   deleteItem: (id: number) => request<void>(`/items/${id}`, { method: "DELETE" }),
+  exportItem: (id: number, denoise: boolean) =>
+    request<{ path: string; name: string; denoised: boolean }>(
+      `/items/${id}/export`,
+      { method: "POST", body: JSON.stringify({ denoise }) },
+    ),
+  reveal: (path: string) =>
+    request<{ revealed: boolean }>("/reveal", {
+      method: "POST",
+      body: JSON.stringify({ path }),
+    }),
   createText: (text: string) =>
     request<{ item_id: number; duplicate: boolean }>("/items/text", {
       method: "POST",
