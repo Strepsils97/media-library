@@ -14,7 +14,11 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("search");
   const [stats, setStats] = useState<LibraryStats | null>(null);
   const [runtime, setRuntime] = useState<RuntimeStatus | null>(null);
-  const [viewing, setViewing] = useState<SearchHit | null>(null);
+  // Перегляд гортає результати, тож йому потрібен увесь список, а не лише
+  // обраний запис.
+  const [viewing, setViewing] = useState<{ hits: SearchHit[]; index: number } | null>(
+    null,
+  );
   const [settings, setSettings] = useState<UserSettings | null>(null);
 
   const refresh = useCallback(() => {
@@ -43,7 +47,9 @@ export default function App() {
   if (viewing) {
     return (
       <ViewerScreen
-        hit={viewing}
+        hits={viewing.hits}
+        index={viewing.index}
+        onIndex={(index) => setViewing({ ...viewing, index })}
         onBack={() => setViewing(null)}
         onChanged={refresh}
         onDeleted={() => {
@@ -59,7 +65,7 @@ export default function App() {
       {screen === "search" && (
         <SearchScreen
           libraryEmpty={stats !== null && stats.item_count === 0}
-          onOpen={setViewing}
+          onOpen={(hits, index) => setViewing({ hits, index })}
         />
       )}
       {screen === "add" && <AddScreen onAdded={refresh} />}

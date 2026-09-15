@@ -137,7 +137,7 @@ function Preview({ hit }: { hit: SearchHit }) {
 
 interface Props {
   hit: SearchHit;
-  onOpen: (hit: SearchHit) => void;
+  onOpen: () => void;
 }
 
 export function ResultCard({ hit, onOpen }: Props) {
@@ -153,7 +153,7 @@ export function ResultCard({ hit, onOpen }: Props) {
   return (
     <button
       type="button"
-      onClick={() => onOpen(hit)}
+      onClick={onOpen}
       className="group flex flex-col rounded-md border border-line bg-surface text-left transition-colors hover:border-line-2 hover:bg-surface-2 focus:outline-none focus-visible:border-accent"
     >
       <div className="relative aspect-4/3 overflow-hidden rounded-t-md bg-stage">

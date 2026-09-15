@@ -99,3 +99,59 @@ def test_unchanged_dimensions_keep_vectors(library):
     db.init_db(conn)
 
     assert conn.execute("SELECT COUNT(*) AS n FROM embeddings").fetchone()["n"] == 1
+
+
+def test_pending_migration_runs_once_and_keeps_data(library, monkeypatch):
+    """Повний шлях оновлення: нова версія приносить крок, база доганяє схему."""
+    conn = db.init_db()
+    item_id = _seed_item()
+    repo.create_tag("збережи")
+    repo.set_item_tags(item_id, ["збережи"])
+
+    applied: list[int] = []
+
+    def add_column(connection):
+        applied.append(2)
+        connection.execute("ALTER TABLE items ADD COLUMN rating INTEGER")
+
+    monkeypatch.setattr(migrations, "SCHEMA_VERSION", 2)
+    monkeypatch.setattr(
+        migrations,
+        "MIGRATIONS",
+        [migrations.Migration(2, "додано items.rating", add_column)],
+    )
+
+    assert migrations.run(conn) == 2
+    assert applied == [2], "міграція має відпрацювати рівно раз"
+
+    # Дані на місці, нова колонка теж.
+    assert repo.get_item(item_id)["rating"] is None
+    assert repo.tags_for_item(item_id) == ["збережи"]
+
+    # Другий старт нічого не повторює.
+    assert migrations.run(conn) == 2
+    assert applied == [2]
+
+
+def test_failed_migration_rolls_back(library, monkeypatch):
+    """Зламаний крок не має лишати базу напівоновленою."""
+    conn = db.init_db()
+    _seed_item()
+
+    def broken(connection):
+        connection.execute("ALTER TABLE items ADD COLUMN half_done INTEGER")
+        raise RuntimeError("щось пішло не так")
+
+    monkeypatch.setattr(migrations, "SCHEMA_VERSION", 2)
+    monkeypatch.setattr(
+        migrations, "MIGRATIONS", [migrations.Migration(2, "зламана", broken)]
+    )
+
+    with pytest.raises(RuntimeError, match="щось пішло не так"):
+        migrations.run(conn)
+
+    # Версія лишилася старою, тож наступний запуск спробує крок заново.
+    row = conn.execute(
+        "SELECT value FROM meta WHERE key = 'schema_version'"
+    ).fetchone()
+    assert int(row["value"]) == 1

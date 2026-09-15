@@ -205,6 +205,36 @@ export function SettingsScreen({ stats, runtime, onSettings }: Props) {
         </div>
 
         <div className="space-y-2">
+          <SectionLabel>Обробка й видача</SectionLabel>
+          <div className="flex gap-4">
+            {(
+              [
+                ["max_frames_per_video", "Кадрів на відео", 1, 40,
+                 "більше кадрів — точніший пошук по картинці, більше місця"],
+                ["snippet_words", "Слів в уривку", 5, 80,
+                 "довжина тексту в картці результату"],
+              ] as const
+            ).map(([field, title, min, max, note]) => (
+              <label key={field} className="flex-1">
+                <div className="text-[12px] text-ink">{title}</div>
+                <input
+                  type="number"
+                  min={min}
+                  max={max}
+                  value={settings[field]}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (value >= min && value <= max) apply({ [field]: value });
+                  }}
+                  className="tnum mt-1 w-full rounded border border-line bg-surface px-2 py-1 text-[12px] text-ink focus:border-line-2 focus:outline-none"
+                />
+                <div className="mt-0.5 text-[11px] text-ink-faint">{note}</div>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <SectionLabel>Мови розпізнавання</SectionLabel>
           <div className="flex gap-1.5">
             {["українська", "російська", "німецька"].map((lang) => (

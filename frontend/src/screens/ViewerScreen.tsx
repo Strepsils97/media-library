@@ -73,13 +73,23 @@ function DeleteDialog({
 }
 
 interface Props {
-  hit: SearchHit;
+  hits: SearchHit[];
+  index: number;
+  onIndex: (index: number) => void;
   onBack: () => void;
   onChanged: () => void;
   onDeleted: () => void;
 }
 
-export function ViewerScreen({ hit, onBack, onChanged, onDeleted }: Props) {
+export function ViewerScreen({
+  hits,
+  index,
+  onIndex,
+  onBack,
+  onChanged,
+  onDeleted,
+}: Props) {
+  const hit = hits[index];
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [editing, setEditing] = useState(false);
@@ -90,9 +100,15 @@ export function ViewerScreen({ hit, onBack, onChanged, onDeleted }: Props) {
   const mediaRef = useRef<HTMLVideoElement & HTMLAudioElement>(null);
 
   useEffect(() => {
+    setItem(null);
+    setEditing(false);
+    setError(null);
     api.item(hit.item_id).then(setItem).catch((e) => setError((e as Error).message));
-    api.tags().then(setTags).catch(() => undefined);
   }, [hit.item_id]);
+
+  useEffect(() => {
+    api.tags().then(setTags).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -100,11 +116,17 @@ export function ViewerScreen({ hit, onBack, onChanged, onDeleted }: Props) {
         if (confirmDelete) setConfirmDelete(false);
         else if (editing) setEditing(false);
         else onBack();
+        return;
       }
+      // Гортання результатів стрілками. Поки запис редагується, стрілки
+      // належать полю вводу, а не навігації.
+      if (editing || confirmDelete) return;
+      if (event.key === "ArrowLeft" && index > 0) onIndex(index - 1);
+      if (event.key === "ArrowRight" && index < hits.length - 1) onIndex(index + 1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onBack, editing, confirmDelete]);
+  }, [onBack, editing, confirmDelete, index, hits.length, onIndex]);
 
   const startEditing = () => {
     if (!item) return;
@@ -159,6 +181,32 @@ export function ViewerScreen({ hit, onBack, onChanged, onDeleted }: Props) {
           {item.label}
         </h1>
         <SimilarityRing score={hit.score} size={26} />
+
+        {hits.length > 1 && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={index === 0}
+              onClick={() => onIndex(index - 1)}
+              className="rounded border border-line bg-surface px-1.5 py-1 text-[12px] text-ink-dim hover:text-ink disabled:opacity-30"
+              title="Попередній результат (←)"
+            >
+              ←
+            </button>
+            <span className="tnum text-[11px] text-ink-faint">
+              {index + 1} з {hits.length}
+            </span>
+            <button
+              type="button"
+              disabled={index === hits.length - 1}
+              onClick={() => onIndex(index + 1)}
+              className="rounded border border-line bg-surface px-1.5 py-1 text-[12px] text-ink-dim hover:text-ink disabled:opacity-30"
+              title="Наступний результат (→)"
+            >
+              →
+            </button>
+          </div>
+        )}
         {hit.match_ts_s !== null && (item.kind === "video" || item.kind === "audio") && (
           <button
             type="button"

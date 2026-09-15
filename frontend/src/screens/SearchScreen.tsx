@@ -102,7 +102,7 @@ function NothingFound({
 
 interface Props {
   libraryEmpty: boolean;
-  onOpen: (hit: SearchHit) => void;
+  onOpen: (hits: SearchHit[], index: number) => void;
 }
 
 export function SearchScreen({ libraryEmpty, onOpen }: Props) {
@@ -356,8 +356,12 @@ export function SearchScreen({ libraryEmpty, onOpen }: Props) {
             />
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(168px,1fr))] gap-2.5">
-              {result.hits.map((hit) => (
-                <ResultCard key={hit.item_id} hit={hit} onOpen={onOpen} />
+              {result.hits.map((hit, index) => (
+                <ResultCard
+                  key={hit.item_id}
+                  hit={hit}
+                  onOpen={() => onOpen(result.hits, index)}
+                />
               ))}
             </div>
           )}

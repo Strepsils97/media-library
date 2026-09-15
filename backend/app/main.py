@@ -92,6 +92,10 @@ def run() -> None:
     thread = threading.Thread(target=server.run, name="uvicorn", daemon=True)
     thread.start()
 
+    # Порт випадковий, тож без цього рядка немає як ані перевірити застосунок
+    # ззовні, ані зрозуміти з логу, що саме він слухав.
+    log.info("Інтерфейс: http://127.0.0.1:%d", port)
+
     webview.create_window(
         "media-library",
         f"http://127.0.0.1:{port}",

@@ -32,16 +32,34 @@ def main() -> None:
     if not frontend.exists():
         raise SystemExit("Спершу зберіть фронтенд: npm run build у frontend/")
 
-    print("1/3 PyInstaller…")
+    # PyInstaller із --noconfirm зносить теку призначення цілком, разом із
+    # бібліотекою користувача. Відкладаємо її вбік на час збірки: перезбірка
+    # на місці не має коштувати даних.
+    stash = ROOT / "dist" / ".data-stash"
+    data = DIST / "data"
+    if data.exists():
+        if stash.exists():
+            shutil.rmtree(stash)
+        data.rename(stash)
+        print(f"   бібліотеку відкладено: {stash.name}")
+
+    print("1/4 PyInstaller…")
     result = subprocess.run(
         [sys.executable, "-m", "PyInstaller", "media-library.spec",
          "--noconfirm", "--distpath", "dist", "--workpath", "build"],
         cwd=ROOT, check=False,
     )
+    if stash.exists():
+        DIST.mkdir(parents=True, exist_ok=True)
+        if data.exists():
+            shutil.rmtree(data)
+        stash.rename(data)
+        print("   бібліотеку повернено на місце")
+
     if result.returncode != 0:
         raise SystemExit(f"PyInstaller завершився з кодом {result.returncode}")
 
-    print("2/3 копіювання ваг моделей…")
+    print("2/4 копіювання ваг моделей…")
     source = ROOT / "data" / "models"
     if not source.is_dir():
         raise SystemExit("data/models не існує — спершу python scripts/prepare_models.py")

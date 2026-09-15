@@ -26,9 +26,14 @@ dist/media-library/media-library.exe
 і база сама доводиться до нової схеми при першому запуску.
 
 ```
-python scripts/build.py          # зібрати нову версію
-python scripts/make_release.py   # dist/media-library-<версія>.zip без data/
+python scripts/build.py                     # зібрати нову версію
+python scripts/make_release.py --dry-run    # перевірити, що піде в архів
+python scripts/make_release.py              # dist/media-library-<версія>.zip
 ```
+
+`scripts/build.py` відкладає теку `data` вбік на час збірки й повертає назад:
+PyInstaller із `--noconfirm` зносить теку призначення цілком, тож без цього
+перезбірка на місці знищила б бібліотеку.
 
 На боці користувача:
 

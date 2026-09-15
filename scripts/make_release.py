@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import argparse
 import sys
 import zipfile
 from pathlib import Path
@@ -21,6 +22,11 @@ EXCLUDE_TOP = {"data", "run.log"}
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dry-run", action="store_true",
+                        help="показати, що потрапить в архів, нічого не пишучи")
+    args = parser.parse_args()
+
     if not (DIST / "media-library.exe").exists():
         raise SystemExit("Спершу зберіть застосунок: python scripts/build.py")
 
@@ -35,6 +41,16 @@ def main() -> None:
     ]
     total = sum(f.stat().st_size for f in files)
     print(f"Файлів: {len(files)} · {total / 1024**3:.2f} ГБ до стиснення")
+
+    if args.dry_run:
+        tops: dict[str, int] = {}
+        for f in files:
+            tops[f.relative_to(DIST).parts[0]] = tops.get(f.relative_to(DIST).parts[0], 0) + 1
+        for name, count in sorted(tops.items()):
+            print(f"  {name}: {count}")
+        excluded = [p.name for p in DIST.iterdir() if p.name in EXCLUDE_TOP]
+        print(f"  не входить: {', '.join(excluded) or '—'}")
+        return
 
     # ZIP_STORED, а не DEFLATED: усередині майже все — уже стиснуті ваги
     # моделей і DLL, і стиснення дало б відсотки за десятки хвилин.
