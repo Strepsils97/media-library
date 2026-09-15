@@ -126,6 +126,11 @@ def _reconcile_dims(conn: sqlite3.Connection) -> None:
         conn.execute("UPDATE meta SET value = ? WHERE key = ?", (str(dim), key))
 
 
+# Стеля SQLite на кількість параметрів у запиті — 32766; лишаємо запас на
+# решту прив'язок.
+_MAX_IN_PARAMS = 30000
+
+
 def knn(
     conn: sqlite3.Connection,
     space: str,
@@ -139,22 +144,39 @@ def knn(
     як рахується схожість, а не відсіювати вже знайдене.
     """
     table = vec_table(space)
-    # vec0 не бачить `LIMIT ?`, переданий як параметр, і вимагає явного `k`.
-    params: list[object] = [serialize(query), limit]
-    clause = ""
+    blob = serialize(query)
 
-    if restrict_to is not None:
-        rowids = list(restrict_to)
-        if not rowids:
-            return []
-        clause = f" AND rowid IN ({','.join('?' * len(rowids))})"
-        params.extend(rowids)
+    def run(chunk: list[int] | None) -> list[sqlite3.Row]:
+        # vec0 не бачить `LIMIT ?`, переданий як параметр, і вимагає явного `k`.
+        params: list[object] = [blob, limit]
+        clause = ""
+        if chunk is not None:
+            clause = f" AND rowid IN ({','.join('?' * len(chunk))})"
+            params.extend(chunk)
+        sql = (
+            f"SELECT rowid, distance FROM {table} "  # noqa: S608 — назва з білого списку
+            f"WHERE embedding MATCH ? AND k = ?{clause} ORDER BY distance"
+        )
+        return conn.execute(sql, params).fetchall()
 
-    sql = (
-        f"SELECT rowid, distance FROM {table} "  # noqa: S608 — назва з білого списку
-        f"WHERE embedding MATCH ? AND k = ?{clause} ORDER BY distance"
-    )
-    return conn.execute(sql, params).fetchall()
+    if restrict_to is None:
+        return run(None)
+
+    rowids = list(restrict_to)
+    if not rowids:
+        return []
+    if len(rowids) <= _MAX_IN_PARAMS:
+        return run(rowids)
+
+    # Довгий список не влазить у запит: у SQLite є стеля на кількість
+    # параметрів, і на бібліотеці з тисяч відео фільтр по типу об неї спотикався.
+    # Найближчі сусіди підмножини — це найкращі з найближчих сусідів її частин,
+    # тож розбиваємо на шматки й зливаємо результати.
+    found: list[sqlite3.Row] = []
+    for start in range(0, len(rowids), _MAX_IN_PARAMS):
+        found.extend(run(rowids[start : start + _MAX_IN_PARAMS]))
+    found.sort(key=lambda row: row["distance"])
+    return found[:limit]
 
 
 def similarities(

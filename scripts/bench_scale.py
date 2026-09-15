@@ -7,7 +7,7 @@
 
 Моделі підмінюються заглушками: перевіряється шлях даних, а не якість.
 
-  python scripts/bench_scale.py --items 5000
+  python scripts/bench_scale.py --items 8000 --shape media
 """
 
 from __future__ import annotations
@@ -37,7 +37,26 @@ def sentence(rng: random.Random, length: int = 40) -> str:
     return " ".join(rng.choice(WORDS) for _ in range(length))
 
 
-def build(settings: Settings, items: int, seed: int = 7) -> dict[str, int]:
+# Форма бібліотеки. Вона важить більше за кількість записів: пошук перебирає
+# вектори, а їх на один запис може бути і два, і тридцять.
+#
+#   mixed — переважно картинки, трохи відео; так виглядає збірна бібліотека
+#   media — лише відео й аудіо, кожне з транскрипцією; вдвічі більше кадрів
+#           на відео (стеля max_frames_per_video) і довші транскрипції
+SHAPES = ("mixed", "media")
+
+
+def _plan(index: int, shape: str) -> tuple[str, int, int]:
+    """Що це за запис: (тип, кадрів, шматків транскрипції)."""
+    if shape == "media":
+        return ("video", 12, 8) if index % 2 else ("audio", 0, 8)
+    kind = "image" if index % 3 else ("video" if index % 2 else "text")
+    return kind, (1 if kind == "image" else 4 if kind == "video" else 0), (
+        2 if kind in ("video", "text") else 0
+    )
+
+
+def build(settings: Settings, items: int, seed: int = 7, shape: str = "mixed") -> dict[str, int]:
     from backend.app.db import repo
     from backend.app.db.connection import IMAGE_SPACES, SPACES, TEXT_SPACE, init_db
     from backend.app.ingest.storage import Prepared
@@ -47,9 +66,7 @@ def build(settings: Settings, items: int, seed: int = 7) -> dict[str, int]:
     counts = {"items": 0, "vectors": 0}
 
     for index in range(items):
-        # Приблизно як у реальній бібліотеці: більшість — картинки,
-        # менша частина — відео з кадрами й транскрипцією.
-        kind = "image" if index % 3 else ("video" if index % 2 else "text")
+        kind, frame_count, chunk_count = _plan(index, shape)
         item_id = repo.create_item(
             Prepared(
                 kind=kind,
@@ -60,15 +77,14 @@ def build(settings: Settings, items: int, seed: int = 7) -> dict[str, int]:
                 mime=None,
                 size_bytes=1,
                 created_at="2026-01-01T00:00:00+00:00",
-                duration_s=30.0 if kind == "video" else None,
+                duration_s=None if kind in ("image", "text") else 180.0,
                 text_content=sentence(rng) if kind == "text" else None,
             )
         )
         counts["items"] += 1
 
-        if kind in ("image", "video"):
-            frames = 1 if kind == "image" else 4
-            for frame in range(frames):
+        if frame_count:
+            for frame in range(frame_count):
                 frame_id = (
                     repo.add_frame(item_id, frame * 7.0, f"ab/{index}_{frame}.webp")
                     if kind == "video"
@@ -82,17 +98,16 @@ def build(settings: Settings, items: int, seed: int = 7) -> dict[str, int]:
                     repo.add_embedding(item_id, space, vector, frame_id=frame_id)
                     counts["vectors"] += 1
 
-        if kind in ("video", "text"):
-            for chunk in range(2):
-                vector = np.random.default_rng(index * 100 + chunk).standard_normal(
-                    SPACES[TEXT_SPACE]
-                )
-                vector /= np.linalg.norm(vector)
-                repo.add_embedding(
-                    item_id, TEXT_SPACE, vector,
-                    chunk_ix=chunk, chunk_text=sentence(rng), ts_s=chunk * 15.0,
-                )
-                counts["vectors"] += 1
+        for chunk in range(chunk_count):
+            vector = np.random.default_rng(index * 100 + chunk).standard_normal(
+                SPACES[TEXT_SPACE]
+            )
+            vector /= np.linalg.norm(vector)
+            repo.add_embedding(
+                item_id, TEXT_SPACE, vector,
+                chunk_ix=chunk, chunk_text=sentence(rng), ts_s=chunk * 15.0,
+            )
+            counts["vectors"] += 1
 
     return counts
 
@@ -101,6 +116,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--items", type=int, default=5000)
     parser.add_argument("--repeats", type=int, default=5)
+    parser.add_argument("--shape", choices=SHAPES, default="mixed")
     args = parser.parse_args()
 
     import tempfile
@@ -122,9 +138,9 @@ def main() -> None:
 
     registry.use_stubs()
 
-    print(f"Будую бібліотеку на {args.items} записів у {tmp}…")
+    print(f"Будую бібліотеку на {args.items} записів ({args.shape}) у {tmp}…")
     started = time.perf_counter()
-    counts = build(settings, args.items)
+    counts = build(settings, args.items, shape=args.shape)
     print(
         f"  {counts['items']} записів · {counts['vectors']} векторів · "
         f"{time.perf_counter() - started:.0f}s"
