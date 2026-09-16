@@ -36,6 +36,11 @@ dev = [
     "httpx>=0.27",
 ]
 
+# Корінь плаский: поруч лежать backend/, frontend/, brand/, data/. Без явного
+# переліку setuptools відмовляється вгадувати, що з цього пакет.
+[tool.setuptools]
+packages = ["backend"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [

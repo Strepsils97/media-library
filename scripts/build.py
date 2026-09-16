@@ -6,14 +6,12 @@
 
   python scripts/build.py           повна збірка (десь чверть години)
   python scripts/build.py --ui      лише інтерфейс, секунди
-  python scripts/build.py --code    інтерфейс і бекенд, теж секунди
-  python scripts/build.py --code --to "C:/Users/.../media-library"
+  python scripts/build.py --ui --to "C:/Users/.../media-library"
 
 Повна збірка довга не через наш код: PyInstaller щоразу переписує в dist
-близько шести гігабайтів torch і CUDA. Тому наш код їде поруч із екзешником
-звичайними файлами — і фронтенд, і backend/. Оновити його означає замінити
-файли; повна збірка потрібна лише коли змінюється склад залежностей: torch,
-ffmpeg, DeepFilterNet, ваги моделей.
+близько шести гігабайтів torch і CUDA. Тому зміни в інтерфейсі краще
+розкочувати окремо — застосунок віддає фронтенд із файлів поруч із собою, і
+замінити їх достатньо.
 
 Теку build/ між збірками видаляти не треба: у ній лежить розбір залежностей,
 і без неї PyInstaller починає його спочатку.
@@ -49,35 +47,6 @@ def build_frontend() -> Path:
     return ROOT / "frontend" / "dist"
 
 
-def sync_backend(dist_root: Path) -> int:
-    """Кладе свіжий код бекенда у вже зібраний застосунок.
-
-    Зайві .py прибираються теж: лишений від старої версії модуль — це
-    найнеприємніший різновид помилки, бо імпортується він мовчки.
-    """
-    target = dist_root / "_internal" / "backend"
-    if not target.is_dir():
-        raise SystemExit(
-            f"У {dist_root} немає _internal/backend — цей застосунок зібрано "
-            "старою спекою, з кодом усередині екзешника. Потрібна повна збірка."
-        )
-
-    source = ROOT / "backend"
-    wanted = {path.relative_to(source) for path in source.rglob("*.py")}
-    copied = mirror(source, target, skip=("__pycache__",))
-
-    stale = 0
-    for path in sorted(target.rglob("*.py"), reverse=True):
-        if path.relative_to(target) not in wanted:
-            path.unlink()
-            stale += 1
-    for junk in sorted(target.rglob("__pycache__"), reverse=True):
-        shutil.rmtree(junk, ignore_errors=True)
-
-    print(f"   бекенд оновлено: {copied} файлів" + (f", прибрано {stale}" if stale else ""))
-    return copied
-
-
 def sync_frontend(dist_root: Path) -> None:
     """Кладе свіжий інтерфейс у вже зібраний застосунок."""
     target = dist_root / "_internal" / "frontend" / "dist"
@@ -89,7 +58,7 @@ def sync_frontend(dist_root: Path) -> None:
     print(f"   інтерфейс оновлено: {target}")
 
 
-def mirror(source: Path, target: Path, *, skip: tuple[str, ...] = ()) -> int:
+def mirror(source: Path, target: Path, skip: tuple[str, ...]) -> int:
     """Копіює лише те, чого бракує або що змінилося. Повертає кількість файлів.
 
     Ваги — п'ять гігабайтів незмінних файлів, і зносити їх щоразу заради
@@ -113,14 +82,12 @@ def mirror(source: Path, target: Path, *, skip: tuple[str, ...] = ()) -> int:
 
 
 def main() -> None:
-    if "--ui" in sys.argv or "--code" in sys.argv:
+    if "--ui" in sys.argv:
         # Швидкий шлях: у застосунку змінився лише інтерфейс. PyInstaller тут
         # ні до чого — фронтенд лежить звичайними файлами поруч із екзешником.
         build_frontend()
         where = sys.argv[sys.argv.index("--to") + 1] if "--to" in sys.argv else str(DIST)
         sync_frontend(Path(where))
-        if "--code" in sys.argv:
-            sync_backend(Path(where))
         return
 
     frontend = ROOT / "frontend" / "dist"
@@ -162,7 +129,7 @@ def main() -> None:
     # Кеш HuggingFace копіюємо без службових тек із блобами: у збірці потрібні
     # лише самі знімки, а blobs дублювали б їх ще раз.
     target = INTERNAL / "models"
-    copied = mirror(source, target, skip=("blobs", ".locks"))
+    copied = mirror(source, target, ("blobs", ".locks"))
     print(f"   скопійовано файлів: {copied}" if copied else "   уже на місці")
 
     print("3/4 підпис…")
@@ -190,8 +157,6 @@ def main() -> None:
         "ffmpeg": INTERNAL / "ffmpeg.exe",
         "deep-filter": INTERNAL / "deep-filter.exe",
         "знак": INTERNAL / "brand" / "media-library.ico",
-        # Код має лежати файлами, а не в архіві: інакше --code нікуди класти.
-        "код бекенда": INTERNAL / "backend" / "app" / "main.py",
         "CUDA": INTERNAL / "cuda" / "cublas64_12.dll",
         "SigLIP": target / "local" / "siglip" / "config.json",
         "NLLB-CLIP": target / "local" / "nllbclip" / "open_clip_pytorch_model.bin",
