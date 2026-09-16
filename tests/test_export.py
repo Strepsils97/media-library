@@ -16,6 +16,10 @@ SAMPLES = Path(__file__).resolve().parents[1] / "samples"
 def _item(library, kind: str, name: str, label: str) -> dict:
     init_db()
     source = SAMPLES / ("audio" if kind != "image" else "images") / name
+    # Семпли не в репозиторії — це чужі записи. Без них тест не має що
+    # перевіряти, і чесніше пропустити його, ніж падати з FileNotFoundError.
+    if not source.exists():
+        pytest.skip(f"немає семпла {source.name}")
     stored = Path("ab") / name
     target = library.originals_dir / stored
     target.parent.mkdir(parents=True, exist_ok=True)
