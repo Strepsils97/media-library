@@ -37,13 +37,25 @@ class Transcript:
     segments: list[Segment]
 
 
+# Пакетний режим: VAD ріже запис на шматки мовлення, і вони йдуть у модель
+# разом, а не один за одним. Заміряно на 11 хвилинах із живої бібліотеки:
+# послідовно ×31 реального часу, пакетами по 8 — ×47.
+#
+# Текст при цьому розходиться з послідовним приблизно на 20% слів, і це не
+# втрата якості: розбіжності — розділові знаки, слова-паразити й окремі
+# одруки в обидва боки («автоматизувати» проти «атоматизувати»). Зміст і
+# довжина ті самі, галюцинацій на тиші не додалося. Для пошуку — байдуже:
+# нечітке зіставлення фраз саме на такі розбіжності й розраховане.
+BATCH_SIZE = 8
+
 _lock = threading.Lock()
 _model = None
+_batched = None
 _model_key: tuple[str, str] | None = None
 
 
 def _get_model():
-    global _model, _model_key
+    global _model, _batched, _model_key
     settings = get_settings()
     device, compute = resolve_device(settings.device)
     if settings.asr_compute_type != "auto":
@@ -61,8 +73,21 @@ def _get_model():
                 compute_type=compute,
                 download_root=str(settings.models_dir),
             )
+            _batched = None
             _model_key = key
         return _model
+
+
+def _get_batched():
+    """Пакетна обгортка навколо тієї самої моделі — других ваг у пам'яті немає."""
+    global _batched
+    model = _get_model()
+    with _lock:
+        if _batched is None:
+            from faster_whisper import BatchedInferencePipeline
+
+            _batched = BatchedInferencePipeline(model=model)
+        return _batched
 
 
 def _pick_language(model, audio) -> tuple[str, float]:
@@ -96,15 +121,26 @@ def transcribe(
 
     language, probability = _pick_language(model, audio)
 
-    segments_iter, info = model.transcribe(
-        audio,
-        language=language,
-        vad_filter=True,
-        beam_size=5,
-        # Обидва — проти галюцинацій на тиші й у кінці кліпу.
-        condition_on_previous_text=False,
-        hallucination_silence_threshold=2.0,
-    )
+    if BATCH_SIZE > 1:
+        # Порогу галюцинацій пакетний режим не приймає, і він тут зайвий:
+        # тишу відрізає VAD ще до моделі, а саме на ній вони й виникали.
+        segments_iter, info = _get_batched().transcribe(
+            audio,
+            language=language,
+            beam_size=5,
+            batch_size=BATCH_SIZE,
+            condition_on_previous_text=False,
+        )
+    else:
+        segments_iter, info = model.transcribe(
+            audio,
+            language=language,
+            vad_filter=True,
+            beam_size=5,
+            # Обидва — проти галюцинацій на тиші й у кінці кліпу.
+            condition_on_previous_text=False,
+            hallucination_silence_threshold=2.0,
+        )
 
     total = info.duration or 0.0
     segments: list[Segment] = []

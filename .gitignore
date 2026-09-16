@@ -15,5 +15,4 @@ samples/
 samples/
 *.output
 tools/
-
 media_library.egg-info/
