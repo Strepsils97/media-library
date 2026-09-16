@@ -95,6 +95,7 @@ export function ViewerScreen({
   const [editing, setEditing] = useState(false);
   const [draftLabel, setDraftLabel] = useState("");
   const [draftTags, setDraftTags] = useState<string[]>([]);
+  const [draftTranscript, setDraftTranscript] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [denoise, setDenoise] = useState("");
@@ -137,6 +138,7 @@ export function ViewerScreen({
     if (!item) return;
     setDraftLabel(item.label);
     setDraftTags(item.tags);
+    setDraftTranscript(item.transcript);
     setEditing(true);
   };
 
@@ -146,6 +148,9 @@ export function ViewerScreen({
       const updated = await api.patchItem(item.id, {
         label: draftLabel,
         tags: draftTags,
+        // Транскрибцію теж: доти виправити машинний текст можна було лише на
+        // екрані «Додати», а звідти запис зникав, щойно обробка завершувалась.
+        ...(draftTranscript !== null ? { transcript: draftTranscript } : {}),
       });
       setItem(updated);
       setEditing(false);
@@ -513,18 +518,25 @@ export function ViewerScreen({
             </div>
           )}
 
-          {item.transcript && (
+          {(item.transcript || (editing && draftTranscript !== null)) && (
             <div>
               <div className="font-mono text-[10px] font-semibold tracking-[0.14em] text-ink-faint uppercase">
                 Транскрибція · {item.transcript_lang}
               </div>
-              <p className="selectable mt-1 text-[12px] leading-[1.6] text-ink-dim">
-                {item.transcript}
-              </p>
+              {editing && draftTranscript !== null ? (
+                <textarea
+                  value={draftTranscript}
+                  onChange={(e) => setDraftTranscript(e.target.value)}
+                  rows={10}
+                  className="selectable mt-1 w-full resize-y rounded border border-accent bg-surface p-2 text-[12px] leading-[1.6] text-ink focus:outline-none"
+                />
+              ) : (
+                <p className="selectable mt-1 text-[12px] leading-[1.6] text-ink-dim">
+                  {item.transcript}
+                </p>
+              )}
               <p className="mt-1 text-[11px] text-ink-faint">
-                {item.transcript_edited
-                  ? "виправлено вручну"
-                  : "машинний текст · правиться на екрані «Додати»"}
+                {item.transcript_edited ? "виправлено вручну" : "машинний текст"}
               </p>
             </div>
           )}

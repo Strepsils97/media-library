@@ -45,6 +45,28 @@ def _bundled_root() -> Path:
     return _app_root()
 
 
+def _point_hf_cache_at_our_models() -> None:
+    """Скеровує кеш HuggingFace у наші ваги.
+
+    Передати `cache_dir` у місці виклику недостатньо: open_clip будує текстову
+    вежу сам і кличе `AutoConfig.from_pretrained` без жодного cache_dir, тож
+    та йде в домашній кеш користувача. Доки він існував, усе працювало — і
+    вшитий у збірку токенізатор лежав мертвим вантажем. Варто було той кеш
+    прибрати, і застосунок пішов у мережу по файл, який лежав у нього поруч.
+
+    Змінна середовища закриває всі такі виклики одразу, включно з тими, до
+    яких ми не дотягуємося.
+    """
+    for candidate in (_bundled_root() / "models", _app_root() / "data" / "models"):
+        if candidate.is_dir():
+            os.environ.setdefault("HF_HUB_CACHE", str(candidate))
+            os.environ.setdefault("HF_HOME", str(candidate))
+            return
+
+
+_point_hf_cache_at_our_models()
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MEDIALIB_", env_file=".env")
 

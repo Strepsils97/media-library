@@ -22,6 +22,19 @@ const STATUS_LABEL: Record<string, string> = {
  *  свіжими даними з сервера. */
 type EditableField = "label" | "transcript";
 
+/** Запис, доданий у цьому сеансі. Лишається в списку назавжди — доки вікно
+ *  відкрите, — навіть коли обробка давно скінчилася. */
+interface Added {
+  item_id: number;
+  name: string;
+  kind: string;
+}
+
+/** По скільки файлів за раз. Одним запитом на сотню відео браузер спершу
+ *  збирає в пам'яті все тіло, а потім будь-яка помилка губить усю пачку —
+ *  тому відправляємо частинами. */
+const UPLOAD_BATCH = 4;
+
 function formatTime(seconds: number): string {
   const total = Math.round(seconds);
   return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
@@ -39,6 +52,9 @@ export function AddScreen({ onAdded }: { onAdded: () => void }) {
   const [mode, setMode] = useState<"file" | "text">("file");
   const [dragging, setDragging] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [added, setAdded] = useState<Added[]>([]);
+  const [checked, setChecked] = useState<Set<number>>(new Set());
+  const [batch, setBatch] = useState<string | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [detail, setDetail] = useState<ItemDetail | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -46,6 +62,7 @@ export function AddScreen({ onAdded }: { onAdded: () => void }) {
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -60,10 +77,12 @@ export function AddScreen({ onAdded }: { onAdded: () => void }) {
   }, []);
 
   useEffect(() => {
+    // Готові завдання теж потрібні: саме з них беруться відсотки й статус для
+    // списку доданих, а зникати після завершення записи не мають.
     const load = () =>
       api
         .jobs()
-        .then((all) => setJobs(all.filter((j) => j.status !== "done").slice(0, 40)))
+        .then((all) => setJobs(Array.isArray(all) ? all.slice(0, 200) : []))
         .catch(() => undefined);
     load();
     const timer = window.setInterval(load, 1500);
@@ -121,38 +140,78 @@ export function AddScreen({ onAdded }: { onAdded: () => void }) {
     };
   }, [selected, applyFromServer]);
 
+  type Created = {
+    filename?: string;
+    item_id?: number;
+    kind?: string;
+    label?: string;
+    error?: string;
+    duplicate?: boolean;
+  };
+
+  /** Відправляє одну пачку. Кидає помилку з причиною, а не з кодом статусу. */
+  const sendBatch = async (chunk: File[]): Promise<Created[]> => {
+    const form = new FormData();
+    chunk.forEach((file) => form.append("files", file));
+    const response = await fetch("/api/items/upload", { method: "POST", body: form });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(text.slice(0, 300) || `сервер відповів ${response.status}`);
+    }
+    const payload: unknown = await response.json().catch(() => null);
+    // Сервер може віддати й не список — наприклад, {detail: …} при збої.
+    // Раніше на цьому весь екран падав із «filter is not a function».
+    if (!Array.isArray(payload)) {
+      throw new Error("Несподівана відповідь сервера при додаванні");
+    }
+    return payload as Created[];
+  };
+
   const upload = async (files: FileList | File[]) => {
     const list = Array.from(files);
     if (list.length === 0) return;
     setBusy(true);
     setError(null);
-    const form = new FormData();
-    list.forEach((file) => form.append("files", file));
-    try {
-      const response = await fetch("/api/items/upload", { method: "POST", body: form });
-      const created = (await response.json()) as {
-        item_id?: number;
-        error?: string;
-        duplicate?: boolean;
-      }[];
-      const failed = created.filter((c) => c.error);
-      if (failed.length) setError(failed.map((f) => f.error).join("; "));
-      const skipped = created.filter((c) => c.duplicate).length;
-      if (skipped && !failed.length) {
-        setError(
-          skipped === created.length
-            ? "Ці файли вже є в бібліотеці — повторно не додаємо."
-            : `${skipped} із ${created.length} уже були в бібліотеці.`,
-        );
+    setProgress(list.length > UPLOAD_BATCH ? `0 з ${list.length}` : null);
+
+    const created: Created[] = [];
+    const problems: string[] = [];
+
+    for (let start = 0; start < list.length; start += UPLOAD_BATCH) {
+      const chunk = list.slice(start, start + UPLOAD_BATCH);
+      try {
+        created.push(...(await sendBatch(chunk)));
+      } catch (e) {
+        // Одна невдала пачка не має зупиняти решту: у людини може бути сотня
+        // файлів, і починати все спочатку через один збій — знущання.
+        problems.push(`${chunk.map((f) => f.name).join(", ")}: ${(e as Error).message}`);
       }
-      const first = created.find((c) => c.item_id && !c.duplicate) ?? created.find((c) => c.item_id);
-      if (first?.item_id) setSelected(first.item_id);
-      onAdded();
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setBusy(false);
+      if (list.length > UPLOAD_BATCH) {
+        setProgress(`${Math.min(start + UPLOAD_BATCH, list.length)} з ${list.length}`);
+      }
     }
+
+    const fresh = created.filter((c) => c.item_id && !c.duplicate);
+    setAdded((current) => [
+      ...fresh.map((c) => ({
+        item_id: c.item_id as number,
+        name: c.label || c.filename || "запис",
+        kind: c.kind || "",
+      })),
+      ...current.filter((a) => !fresh.some((c) => c.item_id === a.item_id)),
+    ]);
+
+    const failed = created.filter((c) => c.error).map((c) => `${c.filename}: ${c.error}`);
+    const skipped = created.filter((c) => c.duplicate).length;
+    const notes = [...problems, ...failed];
+    if (skipped) notes.push(`${skipped} уже були в бібліотеці`);
+    setError(notes.length ? notes.join("; ") : null);
+
+    if (fresh.length) setSelected(fresh[0].item_id as number);
+    setProgress(null);
+    setBusy(false);
+    onAdded();
   };
 
   const saveText = async () => {
@@ -161,6 +220,11 @@ export function AddScreen({ onAdded }: { onAdded: () => void }) {
     setError(null);
     try {
       const created = await api.createText(text);
+      const name = text.trim().split(/\s+/).slice(0, 6).join(" ");
+      setAdded((current) => [
+        { item_id: created.item_id, name, kind: "text" },
+        ...current.filter((a) => a.item_id !== created.item_id),
+      ]);
       setText("");
       setSelected(created.item_id);
       if (created.duplicate) setError("Такий текст уже є в бібліотеці.");
@@ -200,6 +264,58 @@ export function AddScreen({ onAdded }: { onAdded: () => void }) {
     setDirty(true);
     setSavedAt(null);
     setDetail((current) => (current ? { ...current, [field]: value } : current));
+  };
+
+  /** Рядки списку: додане в цьому сеансі плюс те, що ще обробляється.
+   *
+   *  Раніше список показував лише незавершені завдання, і запис зникав із
+   *  нього рівно тоді, коли ставав придатним для редагування: транскрибція
+   *  доготувалася — рядок пропав, і виправити текст уже нічим.
+   */
+  const rows: Added[] = (() => {
+    const seen = new Set(added.map((a) => a.item_id));
+    const pending = jobs
+      .filter((j) => j.item_id && j.status !== "done" && !seen.has(j.item_id))
+      .map((j) => ({ item_id: j.item_id as number, name: j.source_name, kind: j.kind }));
+    return [...added, ...pending];
+  })();
+
+  const jobByItem = new Map(jobs.filter((j) => j.item_id).map((j) => [j.item_id, j]));
+
+  const toggleChecked = (id: number) =>
+    setChecked((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const allChecked = rows.length > 0 && rows.every((r) => checked.has(r.item_id));
+
+  /** Додає теги всім позначеним записам, не чіпаючи вже проставлені. */
+  const applyTagsToChecked = async (name: string) => {
+    const ids = rows.map((r) => r.item_id).filter((id) => checked.has(id));
+    if (ids.length === 0) return;
+    setBatch(`${name}: 0 з ${ids.length}`);
+    setError(null);
+    let done = 0;
+    for (const id of ids) {
+      try {
+        const current = await api.item(id);
+        if (!current.tags.includes(name)) {
+          await api.patchItem(id, { tags: [...current.tags, name] });
+        }
+        done += 1;
+        setBatch(`${name}: ${done} з ${ids.length}`);
+      } catch (e) {
+        setError((e as Error).message);
+      }
+    }
+    setBatch(null);
+    if (selected !== null && ids.includes(selected)) {
+      api.item(selected).then(applyFromServer).catch(() => undefined);
+    }
+    onAdded();
   };
 
   const toggleTag = (name: string) => {
@@ -243,8 +359,19 @@ export function AddScreen({ onAdded }: { onAdded: () => void }) {
     >
       <aside className="flex w-[280px] shrink-0 flex-col border-r border-line bg-canvas">
         <div className="flex items-baseline gap-2 px-3 py-3">
-          <h2 className="text-[13px] font-semibold text-ink">Черга додавання</h2>
-          <span className="tnum text-[11px] text-ink-faint">{jobs.length}</span>
+          <h2 className="text-[13px] font-semibold text-ink">Додані</h2>
+          <span className="tnum text-[11px] text-ink-faint">{rows.length}</span>
+          {rows.length > 0 && (
+            <button
+              type="button"
+              onClick={() =>
+                setChecked(allChecked ? new Set() : new Set(rows.map((r) => r.item_id)))
+              }
+              className="ml-auto text-[11px] text-ink-dim hover:text-ink"
+            >
+              {allChecked ? "зняти всі" : "вибрати всі"}
+            </button>
+          )}
         </div>
 
         <div className="px-3 pb-3">
@@ -255,7 +382,7 @@ export function AddScreen({ onAdded }: { onAdded: () => void }) {
             )}
           >
             <span className="text-[12px] text-ink-dim">
-              {busy ? "додаємо…" : "Перетягніть файли у вікно"}
+              {busy ? (progress ? `додаємо · ${progress}` : "додаємо…") : "Перетягніть файли у вікно"}
             </span>
             <button
               type="button"
@@ -275,42 +402,99 @@ export function AddScreen({ onAdded }: { onAdded: () => void }) {
           </div>
         </div>
 
+        {checked.size > 0 && (
+          <div className="mx-3 mb-2 rounded border border-line-2 bg-surface p-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[11px] text-ink-dim">
+                позначено {checked.size}
+              </span>
+              <button
+                type="button"
+                onClick={() => setChecked(new Set())}
+                className="text-[11px] text-ink-faint hover:text-ink"
+              >
+                зняти
+              </button>
+            </div>
+            {tags.length === 0 ? (
+              <p className="mt-1.5 text-[11px] text-ink-faint">
+                щоб проставити теги гуртом, спершу наповніть словник на вкладці «Теги»
+              </p>
+            ) : (
+              <>
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {tags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      disabled={batch !== null}
+                      onClick={() => void applyTagsToChecked(tag.name)}
+                      className="rounded-sm bg-surface-3 px-1.5 py-[1px] text-[11px] text-ink-dim-2 hover:text-ink disabled:opacity-40"
+                    >
+                      + {tag.name}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-[11px] text-ink-faint">
+                  {batch ?? "тег проставиться всім позначеним"}
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-          {jobs.length === 0 && (
-            <p className="px-2 text-[11px] text-ink-faint">черга порожня</p>
+          {rows.length === 0 && (
+            <p className="px-2 text-[11px] text-ink-faint">поки нічого не додано</p>
           )}
-          {jobs.map((job) => (
-            <button
-              key={job.id}
-              type="button"
-              onClick={() => job.item_id && setSelected(job.item_id)}
-              className={clsx(
-                "mb-1 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition-colors",
-                selected === job.item_id ? "bg-surface-3" : "hover:bg-surface-2",
-              )}
-            >
-              <span className="tnum rounded-sm bg-surface-3 px-1 py-[1px] text-[9px] text-ink-faint">
-                {KIND_LABEL[job.kind] ?? "—"}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[12px] text-ink">
-                  {job.source_name}
-                </span>
-                <span
-                  className={clsx(
-                    "block truncate text-[11px]",
-                    job.status === "failed" ? "text-error" : "text-ink-faint",
-                  )}
+          {rows.map((row) => {
+            const job = jobByItem.get(row.item_id);
+            const status = !job
+              ? "готово"
+              : job.status === "running"
+                ? `${Math.round(job.progress * 100)}% · ${job.stage}`
+                : job.status === "failed"
+                  ? "помилка"
+                  : job.status === "done"
+                    ? "готово"
+                    : "у черзі";
+            return (
+              <div
+                key={row.item_id}
+                className={clsx(
+                  "mb-1 flex w-full items-center gap-2 rounded px-2 py-1.5 transition-colors",
+                  selected === row.item_id ? "bg-surface-3" : "hover:bg-surface-2",
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked.has(row.item_id)}
+                  onChange={() => toggleChecked(row.item_id)}
+                  className="size-3 shrink-0 accent-[var(--color-accent)]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSelected(row.item_id)}
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left"
                 >
-                  {job.status === "running"
-                    ? `${Math.round(job.progress * 100)}% · ${job.stage}`
-                    : job.status === "failed"
-                      ? "помилка"
-                      : "у черзі"}
-                </span>
-              </span>
-            </button>
-          ))}
+                  <span className="tnum rounded-sm bg-surface-3 px-1 py-[1px] text-[9px] text-ink-faint">
+                    {KIND_LABEL[row.kind as Kind] ?? "—"}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[12px] text-ink">{row.name}</span>
+                    <span
+                      className={clsx(
+                        "block truncate text-[11px]",
+                        job?.status === "failed" ? "text-error" : "text-ink-faint",
+                      )}
+                    >
+                      {status}
+                    </span>
+                  </span>
+                </button>
+              </div>
+            );
+          })}
         </div>
       </aside>
 
