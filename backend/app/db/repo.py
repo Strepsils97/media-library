@@ -92,6 +92,15 @@ def count_items() -> int:
     return int(row["n"])
 
 
+def originals_bytes() -> int:
+    """Скільки важать оригінали. Розмір кожного вже лежить у базі, тож обхід
+    диска тут зайвий — а на тисячах файлів він коштував секунди."""
+    row = get_connection().execute(
+        "SELECT COALESCE(SUM(size_bytes), 0) AS n FROM items WHERE stored_path IS NOT NULL"
+    ).fetchone()
+    return int(row["n"])
+
+
 def list_frames(item_id: int) -> list[sqlite3.Row]:
     return get_connection().execute(
         "SELECT * FROM frames WHERE item_id = ? ORDER BY ts_s", (item_id,)

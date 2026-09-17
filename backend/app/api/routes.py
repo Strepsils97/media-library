@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import shutil
+import time
 import sqlite3
 from pathlib import Path
 
@@ -83,6 +84,28 @@ def _dir_size(path: Path) -> int:
     return sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
 
 
+# Розміри тек рахувалися обходом файлів на кожен запит, а інтерфейс питає
+# статистику кожні дві секунди. На бібліотеці в сім тисяч записів це
+# одинадцять гігабайтів оригіналів, дев'яносто тисяч кадрів і ваги моделей —
+# шість секунд дискової роботи в циклі, через які гальмувало геть усе,
+# включно з відкриттям відео.
+#
+# Оригінали тепер рахує база: розмір кожного файлу в ній уже є. Кадри —
+# обхід із коротким кешем. Ваги за час роботи не змінюються взагалі.
+_CACHE_TTL_S = 60.0
+_sizes: dict[str, tuple[float, int]] = {}
+
+
+def _cached_dir_size(path: Path, key: str, ttl: float = _CACHE_TTL_S) -> int:
+    now = time.monotonic()
+    cached = _sizes.get(key)
+    if cached and now - cached[0] < ttl:
+        return cached[1]
+    value = _dir_size(path)
+    _sizes[key] = (now, value)
+    return value
+
+
 @router.get("/health")
 def health() -> dict:
     settings = get_settings()
@@ -95,9 +118,10 @@ def stats() -> dict:
     usage = shutil.disk_usage(settings.data_dir)
     return {
         "item_count": repo.count_items(),
-        "originals_bytes": _dir_size(settings.originals_dir),
-        "frames_bytes": _dir_size(settings.frames_dir),
-        "models_bytes": _dir_size(settings.models_dir),
+        "originals_bytes": repo.originals_bytes(),
+        "frames_bytes": _cached_dir_size(settings.frames_dir, "frames"),
+        # Ваги за час роботи застосунку не міняються — рахуємо раз.
+        "models_bytes": _cached_dir_size(settings.models_dir, "models", ttl=float("inf")),
         "db_bytes": settings.db_path.stat().st_size if settings.db_path.exists() else 0,
         "disk_free_bytes": usage.free,
         "disk_total_bytes": usage.total,

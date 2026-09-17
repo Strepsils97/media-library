@@ -72,6 +72,28 @@ function DeleteDialog({
   );
 }
 
+/** Текст із підсвіченим збігом пошуку.
+ *
+ *  Бекенд повертає підсвітку для уривка з картки, а тут показується повна
+ *  транскрибція — тож те саме місце шукається в ній. Без цього людина
+ *  відкривала запис і мусила очима шукати по всьому тексту те, що пошук уже
+ *  знайшов.
+ */
+function Highlighted({ text, needle }: { text: string; needle: string | null }) {
+  if (!needle) return <>{text}</>;
+  const at = text.toLowerCase().indexOf(needle.toLowerCase());
+  if (at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <mark className="rounded-sm bg-accent/20 text-accent">
+        {text.slice(at, at + needle.length)}
+      </mark>
+      {text.slice(at + needle.length)}
+    </>
+  );
+}
+
 interface Props {
   hits: SearchHit[];
   index: number;
@@ -172,6 +194,12 @@ export function ViewerScreen({
       setExporting(false);
     }
   };
+
+  /** Слова, які збіглися з запитом — їх підсвічуємо в транскрибції. */
+  const matched =
+    hit.snippet && hit.snippet_highlight
+      ? hit.snippet.slice(hit.snippet_highlight[0], hit.snippet_highlight[1])
+      : null;
 
   /** Що саме зараз звучить: оригінал чи оброблений варіант. */
   const audioSource =
@@ -403,7 +431,7 @@ export function ViewerScreen({
           )}
           {item.kind === "text" && (
             <div className="selectable font-serif h-full w-full max-w-[680px] overflow-y-auto p-6 text-[13.5px] leading-[1.75] text-ink">
-              {item.text_content}
+              <Highlighted text={item.text_content ?? ""} needle={matched} />
             </div>
           )}
         </div>
@@ -532,7 +560,7 @@ export function ViewerScreen({
                 />
               ) : (
                 <p className="selectable mt-1 text-[12px] leading-[1.6] text-ink-dim">
-                  {item.transcript}
+                  <Highlighted text={item.transcript ?? ""} needle={matched} />
                 </p>
               )}
               <p className="mt-1 text-[11px] text-ink-faint">

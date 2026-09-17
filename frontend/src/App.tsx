@@ -30,8 +30,21 @@ export default function App() {
     refresh();
     // Статус-рядок показує прогрес фонової обробки. Опитування, а не потік
     // подій: запит дешевий, а WebSocket тут ускладнив би і бек, і збірку.
-    const timer = window.setInterval(refresh, 2000);
-    return () => window.clearInterval(timer);
+    const jobs = window.setInterval(
+      () => api.runtime().then(setRuntime).catch(() => undefined),
+      2000,
+    );
+    // А от розміри бібліотеки в секундному масштабі не змінюються, і
+    // питати їх так само часто сенсу немає: у рядку стану вони служать
+    // орієнтиром, а не лічильником.
+    const sizes = window.setInterval(
+      () => api.stats().then(setStats).catch(() => undefined),
+      30000,
+    );
+    return () => {
+      window.clearInterval(jobs);
+      window.clearInterval(sizes);
+    };
   }, [refresh]);
 
   useEffect(() => {
