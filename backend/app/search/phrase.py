@@ -191,6 +191,103 @@ def _fts_query(text: str) -> str:
 
 _COLUMNS = "e.id, e.item_id, e.chunk_text, e.ts_s, e.frame_id, e.chunk_ix"
 
+# Фраза в лапках означає «знайди дослівно». Нечіткий пошук навмисно терпить
+# помилки розпізнавання, і це майже завжди на краще — але коли людина точно
+# знає, як звучало, допуск лише заважає.
+_QUOTED = re.compile(r'^\s*[«"“]\s*(.+?)\s*[»"”]\s*$', re.DOTALL)
+
+
+def exact_query(text: str) -> str | None:
+    """Фраза, взята в лапки, — або None, якщо запит звичайний."""
+    match = _QUOTED.match(text or "")
+    if not match:
+        return None
+    inner = match.group(1).strip()
+    return inner or None
+
+
+def _literally_contains(haystack: str, needle: str) -> bool:
+    """Дослівний збіг: без огляду на регістр і на те, скільки між словами
+    пробілів, але без жодних послаблень щодо самих літер."""
+    left = _SPACES.sub(" ", (haystack or "").casefold()).strip()
+    right = _SPACES.sub(" ", needle.casefold()).strip()
+    return bool(right) and right in left
+
+
+def find_exact(
+    conn: sqlite3.Connection,
+    phrase: str,
+    allowed_items: set[int] | None = None,
+) -> dict[int, tuple[float, sqlite3.Row]]:
+    """Дослівні входження фрази. Повертає {item_id: (скільки разів, рядок)}.
+
+    Шукається в повному тексті запису, а не у фрагментах, на які він порізаний
+    для векторів. Фрагменти з транскрипції ріжуться по межах сегментів і не
+    перекриваються, тож фраза, що лягла на такий стик, у жодному з них цілою
+    не трапляється — на восьми випадкових фразах із бібліотеки одна саме так і
+    губилася.
+
+    Повний перегляд тут не марнотратство: увесь текст бібліотеки — це
+    трохи більше мегабайта, і прохід ним коштує близько десяти мілісекунд.
+    """
+    needle = _SPACES.sub(" ", phrase.casefold()).strip()
+    if not needle:
+        return {}
+
+    rows = conn.execute(
+        """SELECT id, transcript, text_content FROM items
+           WHERE transcript IS NOT NULL OR text_content IS NOT NULL"""
+    ).fetchall()
+
+    counts: dict[int, int] = {}
+    for row in rows:
+        item_id = int(row["id"])
+        if allowed_items is not None and item_id not in allowed_items:
+            continue
+        text = _SPACES.sub(" ", (row["transcript"] or row["text_content"] or "").casefold())
+        count = text.count(needle)
+        if count:
+            counts[item_id] = count
+
+    if not counts:
+        return {}
+
+    # Для кожного знайденого запису беремо той фрагмент, де фраза є: у ньому
+    # лежить момент часу, за яким переглядач відмотує запис на потрібне місце.
+    best: dict[int, tuple[float, sqlite3.Row]] = {}
+    ids = list(counts)
+    for start in range(0, len(ids), 400):
+        chunk = ids[start : start + 400]
+        found = conn.execute(
+            f"""SELECT {_COLUMNS} FROM embeddings e
+               WHERE e.item_id IN ({",".join("?" * len(chunk))})
+                 AND e.chunk_text IS NOT NULL
+               ORDER BY e.item_id, e.chunk_ix""",
+            chunk,
+        ).fetchall()
+        for row in found:
+            item_id = int(row["item_id"])
+            if item_id in best:
+                continue
+            if _literally_contains(row["chunk_text"] or "", phrase):
+                best[item_id] = (float(counts[item_id]), row)
+
+    # Фраза могла лягти на стик фрагментів — тоді підійде будь-який із них:
+    # запис усе одно знайдено, просто без точного моменту.
+    missing = [i for i in counts if i not in best]
+    if missing:
+        for start in range(0, len(missing), 400):
+            chunk = missing[start : start + 400]
+            for row in conn.execute(
+                f"""SELECT {_COLUMNS} FROM embeddings e
+                   WHERE e.item_id IN ({",".join("?" * len(chunk))})
+                   ORDER BY e.item_id, e.chunk_ix""",
+                chunk,
+            ).fetchall():
+                best.setdefault(int(row["item_id"]), (float(counts[int(row["item_id"])]), row))
+
+    return best
+
 
 def _fts_candidates(conn: sqlite3.Connection, query: str) -> list[sqlite3.Row]:
     fts = _fts_query(query)

@@ -115,3 +115,25 @@ def test_respects_item_filter(library):
     assert phrase.find(get_connection(), "шавуха несмачна", allowed_items={item_id})
     # Фільтри пошуку мають діяти й на фразовий прохід.
     assert phrase.find(get_connection(), "шавуха несмачна", allowed_items=set()) == {}
+
+
+def test_exact_query_recognises_quotes():
+    from backend.app.search.phrase import exact_query
+
+    assert exact_query('"кока кола"') == "кока кола"
+    assert exact_query("«кока кола»") == "кока кола"
+    # Звичайний запит лишається звичайним, навіть із лапками всередині.
+    assert exact_query("кока кола") is None
+    assert exact_query('він сказав "ні"') is None
+    assert exact_query('""') is None
+
+
+def test_exact_match_is_literal():
+    from backend.app.search.phrase import _literally_contains
+
+    # Регістр і зайві пробіли не рахуються — це та сама фраза.
+    assert _literally_contains("Купила  КОКА   колу вчора", "кока колу")
+    # А от послаблення, на які йде нечіткий пошук, тут не діють: у точному
+    # режимі «и» замість «і» — це вже інше слово.
+    assert not _literally_contains("купила кока колы", "кока коли")
+    assert not _literally_contains("кока смачна кола", "кока кола")

@@ -39,6 +39,8 @@ export interface SearchResponse {
   took_ms: number;
   /** Скільки знайшлося б без фільтрів — для підказки в порожній видачі. */
   total_unfiltered: number;
+  /** Фраза, яку шукали дослівно, — коли запит був у лапках. */
+  exact?: string;
 }
 
 export interface SearchFilters {

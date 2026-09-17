@@ -67,18 +67,22 @@ function NothingFound({
   unfiltered,
   hasFilters,
   onReset,
+  exact,
 }: {
   unfiltered: number;
   hasFilters: boolean;
   onReset: () => void;
+  exact?: string;
 }) {
   return (
     <div className="flex h-full flex-col items-center justify-center px-8 text-center">
       <h2 className="text-[15px] font-semibold text-ink">Нічого не знайшлось</h2>
       <p className="mt-2 max-w-[460px] text-[13px] leading-[1.6] text-ink-dim">
-        {hasFilters
-          ? "Фільтри відсікають більшу частину бібліотеки. Спробуйте зняти їх або описати запис іншими словами — пошук шукає за змістом, а не за іменем файлу."
-          : "Спробуйте описати запис іншими словами — пошук шукає за змістом, а не за іменем файлу."}
+        {exact
+          ? `Дослівно «${exact}» у бібліотеці немає. Заберіть лапки — тоді пошук знайде і за змістом, і з поправкою на помилки розпізнавання.`
+          : hasFilters
+            ? "Фільтри відсікають більшу частину бібліотеки. Спробуйте зняти їх або описати запис іншими словами — пошук шукає за змістом, а не за іменем файлу."
+            : "Спробуйте описати запис іншими словами — пошук шукає за змістом, а не за іменем файлу."}
       </p>
       {hasFilters && (
         <>
@@ -303,9 +307,14 @@ export function SearchScreen({ libraryEmpty, onOpen }: Props) {
             value={filters.query}
             onChange={(e) => setFilters({ ...filters, query: e.target.value })}
             onKeyDown={(e) => e.key === "Enter" && submit()}
-            placeholder="Опишіть, що шукаєте — своїми словами"
+            placeholder="Опишіть, що шукаєте — своїми словами, у лапках — дослівно"
             className="selectable min-w-0 flex-1 bg-transparent text-[14px] text-ink placeholder:text-ink-faint focus:outline-none"
           />
+          {result?.exact && !loading && (
+            <span className="shrink-0 rounded-sm bg-accent/15 px-1.5 py-[1px] font-mono text-[10px] font-semibold tracking-[0.1em] text-accent uppercase">
+              дослівно
+            </span>
+          )}
           {result && !loading && (
             <span className="tnum shrink-0 text-[11px] text-ink-faint">
               {result.took_ms} мс
@@ -355,6 +364,7 @@ export function SearchScreen({ libraryEmpty, onOpen }: Props) {
               unfiltered={result.total_unfiltered}
               hasFilters={hasFilters}
               onReset={reset}
+              exact={result.exact}
             />
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(168px,1fr))] gap-2.5">

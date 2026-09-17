@@ -265,6 +265,13 @@ def search(filters: Filters) -> dict:
     allowed = _filtered_item_ids(conn, filters)
     limit = settings.knn_candidates
 
+    # Фраза в лапках — прохання знайти дослівно. Смисловий пошук тут зайвий:
+    # він додав би до точних збігів купу схожих за настроєм записів, а людина
+    # просила саме ці слова саме в цьому порядку.
+    exact = phrase.exact_query(filters.query)
+    if exact:
+        return _exact_search(conn, exact, allowed, started, total_unfiltered)
+
     # Запит кодується кожним енкодером окремо — простори різні.
     image_queries = {
         space: vectors[0].tolist()
@@ -305,6 +312,39 @@ def search(filters: Filters) -> dict:
         "total": len(hits),
         "took_ms": int((time.perf_counter() - started) * 1000),
         "total_unfiltered": total_unfiltered,
+    }
+
+
+def _exact_search(
+    conn: sqlite3.Connection,
+    text: str,
+    allowed: set[int] | None,
+    started: float,
+    total_unfiltered: int,
+) -> dict:
+    """Видача для пошуку в лапках: тільки дослівні входження.
+
+    Оцінка тут не від моделі: збіг або є, або його немає. Сотня в усіх, а
+    порядок — за кількістю згадок, бо запис, де про це йшлося тричі,
+    доречніший за той, де фраза майнула раз.
+    """
+    found = phrase.find_exact(conn, text, allowed)
+
+    hits = []
+    for item_id, (count, row) in sorted(found.items(), key=lambda kv: -kv[1][0]):
+        item = repo.get_item(item_id)
+        if item is None:
+            continue
+        hits.append(
+            _build_hit(item, Evidence(100.0, "phrase", row, 1.0), text)
+        )
+
+    return {
+        "hits": hits,
+        "total": len(hits),
+        "took_ms": int((time.perf_counter() - started) * 1000),
+        "total_unfiltered": total_unfiltered,
+        "exact": text,
     }
 
 
