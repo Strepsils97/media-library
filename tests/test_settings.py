@@ -42,3 +42,30 @@ def test_load_survives_broken_file(library):
     (library.data_dir / "settings.json").write_text("{ не json", encoding="utf-8")
     settings_store.load()  # не має кидати
     assert settings_store.current()["asr_model"]
+
+
+def test_api_accepts_every_editable_field():
+    """Модель запиту має знати всі поля, які дозволено міняти.
+
+    Поле, якого немає в SettingsPatch, pydantic викидає мовчки — ще до
+    білого списку. Саме так тека для завантажень була скрізь, крім моделі
+    запиту, і перемикач у налаштуваннях не робив нічого: ні помилки, ні
+    ефекту. Два переліки в різних файлах розходяться легко, тож нехай за
+    цим стежить тест, а не пам'ять.
+    """
+    from backend.app.api.routes import SettingsPatch
+
+    assert settings_store.EDITABLE <= set(SettingsPatch.model_fields)
+
+
+def test_download_dir_must_exist(library, tmp_path):
+    settings_store.update({"download_dir": str(tmp_path)})
+    assert library.download_dir == str(tmp_path)
+
+    # Неіснуючу теку приймати не можна: збереження мовчки пішло б у стандартну.
+    with pytest.raises(ValueError):
+        settings_store.update({"download_dir": str(tmp_path / "нема-такої")})
+
+    # Порожнє значення — повернення до стандартної теки завантажень.
+    settings_store.update({"download_dir": ""})
+    assert library.download_dir == ""

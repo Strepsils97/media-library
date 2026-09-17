@@ -47,11 +47,16 @@ class TextItemRequest(BaseModel):
 
 
 class SettingsPatch(BaseModel):
+    # Поля мають збігатися з settings_store.EDITABLE: чого немає тут, те
+    # pydantic мовчки викине ще до білого списку. Саме так і сталося з текою
+    # завантажень — вона була скрізь, крім цього місця, і перемикач у
+    # налаштуваннях не робив нічого. Тепер за збігом стежить тест.
     asr_model: str | None = None
     device: str | None = None
     theme: str | None = None
     max_frames_per_video: int | None = None
     snippet_words: int | None = None
+    download_dir: str | None = None
 
 
 class ExportRequest(BaseModel):
