@@ -8,14 +8,14 @@ import time
 import sqlite3
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from .. import settings_store
 from ..config import get_settings
 from ..db import backup, repo
-from ..ingest import export, storage
+from ..ingest import convert, export, storage
 from ..ingest.pipeline import index_text
 from ..ml.cuda import resolve_device
 from ..search.query import Filters, search
@@ -218,6 +218,101 @@ def delete_backup(name: str) -> dict:
         raise HTTPException(404, "Копію не знайдено")
     item.path.unlink(missing_ok=True)
     return {"deleted": name}
+
+
+class ConvertRequest(BaseModel):
+    paths: list[str] = Field(default_factory=list)
+    format: str = "mp3"
+    bitrate: str = convert.DEFAULT_BITRATE
+    target_dir: str | None = None
+
+
+@router.get("/convert/formats")
+def convert_formats() -> dict:
+    return {
+        "formats": [
+            {"id": name, "suffix": spec.suffix, "lossy": spec.lossy}
+            for name, spec in convert.FORMATS.items()
+        ],
+        "bitrates": list(convert.BITRATES),
+        "default_bitrate": convert.DEFAULT_BITRATE,
+        "target_dir": str(convert.default_target_dir()),
+    }
+
+
+@router.post("/convert/pick")
+def convert_pick() -> dict:
+    """Системний діалог вибору файлів.
+
+    Так файли переганяються там, де лежать, і не проїжджають зайвий раз
+    через HTTP — на сотні голосових це помітно.
+    """
+    from ..main import pick_files
+
+    return {"paths": pick_files()}
+
+
+@router.post("/convert")
+def convert_files(request: ConvertRequest) -> dict:
+    """Переганяє вказані файли. Бібліотеки не торкається."""
+    if not request.paths:
+        return {"results": []}
+
+    target = Path(request.target_dir) if request.target_dir else None
+    if target is not None and not target.is_dir():
+        raise HTTPException(400, f"Теки не існує: {request.target_dir}")
+
+    try:
+        results = convert.convert_many(
+            [Path(p) for p in request.paths],
+            request.format,
+            request.bitrate,
+            target,
+        )
+    except convert.ConvertFailed as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    return {
+        "results": [
+            {"source": r.source, "path": r.path, "name": r.name, "error": r.error}
+            for r in results
+        ]
+    }
+
+
+@router.post("/convert/upload")
+async def convert_upload(
+    files: list[UploadFile],
+    format: str = Form("mp3"),
+    bitrate: str = Form(convert.DEFAULT_BITRATE),
+) -> dict:
+    """Те саме для перетягнутих у вікно файлів: їх у нас є лише вміст."""
+    settings = get_settings()
+    inbox = settings.data_dir / "inbox"
+    inbox.mkdir(parents=True, exist_ok=True)
+
+    staged: list[Path] = []
+    for upload_file in files:
+        temp = inbox / (upload_file.filename or "file")
+        with temp.open("wb") as handle:
+            shutil.copyfileobj(upload_file.file, handle)
+        upload_file.file.close()
+        staged.append(temp)
+
+    try:
+        results = convert.convert_many(staged, format, bitrate)
+    except convert.ConvertFailed as exc:
+        raise HTTPException(400, str(exc)) from exc
+    finally:
+        for temp in staged:
+            temp.unlink(missing_ok=True)
+
+    return {
+        "results": [
+            {"source": Path(r.source).name, "path": r.path, "name": r.name, "error": r.error}
+            for r in results
+        ]
+    }
 
 
 @router.post("/settings/pick-folder")

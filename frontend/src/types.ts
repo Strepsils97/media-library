@@ -140,3 +140,11 @@ export interface BackupList {
   /** Копія, з якої база відновиться при наступному запуску. */
   pending_restore: string | null;
 }
+
+/** Результат переганяння одного файлу. */
+export interface ConvertResult {
+  source: string;
+  path: string | null;
+  name: string | null;
+  error: string | null;
+}

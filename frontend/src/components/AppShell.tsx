@@ -4,13 +4,14 @@ import type { ReactNode } from "react";
 import type { LibraryStats, RuntimeStatus } from "../types";
 import { Mark } from "./Mark";
 
-export type Screen = "search" | "add" | "queue" | "tags" | "settings";
+export type Screen = "search" | "add" | "queue" | "tags" | "convert" | "settings";
 
 const TABS: { id: Screen; label: string }[] = [
   { id: "search", label: "Пошук" },
   { id: "add", label: "Додати" },
   { id: "queue", label: "Черга" },
   { id: "tags", label: "Теги" },
+  { id: "convert", label: "Конвертація" },
   { id: "settings", label: "Налаштування" },
 ];
 

@@ -38,6 +38,16 @@ def pick_folder(title: str = "Оберіть теку") -> str | None:
     return chosen[0] if chosen else None
 
 
+def pick_files() -> list[str]:
+    """Системний діалог вибору файлів. Порожньо — якщо скасували."""
+    if _window is None:
+        return []
+    import webview
+
+    chosen = _window.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=True)
+    return list(chosen) if chosen else []
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()

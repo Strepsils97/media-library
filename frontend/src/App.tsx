@@ -9,6 +9,7 @@ import { SettingsScreen } from "./screens/SettingsScreen";
 import { TagsScreen } from "./screens/TagsScreen";
 import { ViewerScreen } from "./screens/ViewerScreen";
 import type { LibraryStats, RuntimeStatus, SearchHit, UserSettings } from "./types";
+import { ConvertScreen } from "./screens/ConvertScreen";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("search");
@@ -87,6 +88,7 @@ export default function App() {
         />
       )}
       {screen === "add" && <AddScreen onAdded={refresh} />}
+      {screen === "convert" && <ConvertScreen />}
       {screen === "queue" && <QueueScreen />}
       {screen === "tags" && <TagsScreen />}
       {screen === "settings" && (

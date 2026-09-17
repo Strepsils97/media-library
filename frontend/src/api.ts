@@ -1,5 +1,6 @@
 import type {
   BackupList,
+  ConvertResult,
   ItemDetail,
   Job,
   LibraryStats,
@@ -80,6 +81,20 @@ export const api = {
     request<{ item_id: number; duplicate: boolean }>("/items/text", {
       method: "POST",
       body: JSON.stringify({ text }),
+    }),
+
+  convertFormats: () =>
+    request<{
+      formats: { id: string; suffix: string; lossy: boolean }[];
+      bitrates: string[];
+      default_bitrate: string;
+      target_dir: string;
+    }>("/convert/formats"),
+  pickFiles: () => request<{ paths: string[] }>("/convert/pick", { method: "POST" }),
+  convert: (paths: string[], format: string, bitrate: string) =>
+    request<{ results: ConvertResult[] }>("/convert", {
+      method: "POST",
+      body: JSON.stringify({ paths, format, bitrate }),
     }),
 
   backups: () => request<BackupList>("/backups"),
