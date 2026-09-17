@@ -72,24 +72,75 @@ function DeleteDialog({
   );
 }
 
+type Span = [number, number, number];
+
 /** Текст із підсвіченим збігом пошуку.
  *
- *  Бекенд повертає підсвітку для уривка з картки, а тут показується повна
- *  транскрибція — тож те саме місце шукається в ній. Без цього людина
- *  відкривала запис і мусила очима шукати по всьому тексту те, що пошук уже
- *  знайшов.
+ *  Дві підсвітки роблять різні речі. Точна — ті самі слова в інших формах;
+ *  бекенд знаходить їх у уривку, а тут вони шукаються в повній транскрибції.
+ *  Теплова — відповідь моделі на питання «наскільки це місце про запит»:
+ *  саме вона рятує там, де збіг смисловий і жодного спільного слова немає.
  */
-function Highlighted({ text, needle }: { text: string; needle: string | null }) {
-  if (!needle) return <>{text}</>;
-  const at = text.toLowerCase().indexOf(needle.toLowerCase());
-  if (at < 0) return <>{text}</>;
+function Highlighted({
+  text,
+  needle,
+  spans,
+}: {
+  text: string;
+  needle: string | null;
+  spans: Span[];
+}) {
+  const exact = (() => {
+    if (!needle) return null;
+    const at = text.toLowerCase().indexOf(needle.toLowerCase());
+    return at < 0 ? null : ([at, at + needle.length] as const);
+  })();
+
+  // Межі всіх ділянок — точної та теплових — в одному списку, щоб текст
+  // порізався на шматки один раз.
+  const edges = new Set<number>([0, text.length]);
+  for (const [from, to] of spans) {
+    edges.add(from);
+    edges.add(to);
+  }
+  if (exact) {
+    edges.add(exact[0]);
+    edges.add(exact[1]);
+  }
+
+  const points = [...edges].filter((p) => p >= 0 && p <= text.length).sort((a, b) => a - b);
+
   return (
     <>
-      {text.slice(0, at)}
-      <mark className="rounded-sm bg-accent/20 text-accent">
-        {text.slice(at, at + needle.length)}
-      </mark>
-      {text.slice(at + needle.length)}
+      {points.slice(0, -1).map((from, index) => {
+        const to = points[index + 1];
+        if (to <= from) return null;
+        const piece = text.slice(from, to);
+        const isExact = exact !== null && from >= exact[0] && to <= exact[1];
+        const heat = spans.find(([a, b]) => from >= a && to <= b)?.[2] ?? 0;
+
+        if (isExact) {
+          return (
+            <mark key={from} className="rounded-sm bg-accent/25 text-accent">
+              {piece}
+            </mark>
+          );
+        }
+        if (heat > 0) {
+          return (
+            <span
+              key={from}
+              className="rounded-sm text-ink"
+              // Густина жовтого — це і є оцінка моделі, тож вона рахується,
+              // а не вибирається з набору класів.
+              style={{ backgroundColor: `color-mix(in srgb, var(--color-accent) ${Math.round(heat * 30)}%, transparent)` }}
+            >
+              {piece}
+            </span>
+          );
+        }
+        return <span key={from}>{piece}</span>;
+      })}
     </>
   );
 }
@@ -97,6 +148,7 @@ function Highlighted({ text, needle }: { text: string; needle: string | null }) 
 interface Props {
   hits: SearchHit[];
   index: number;
+  query: string;
   onIndex: (index: number) => void;
   onBack: () => void;
   onChanged: () => void;
@@ -106,6 +158,7 @@ interface Props {
 export function ViewerScreen({
   hits,
   index,
+  query,
   onIndex,
   onBack,
   onChanged,
@@ -118,6 +171,7 @@ export function ViewerScreen({
   const [draftLabel, setDraftLabel] = useState("");
   const [draftTags, setDraftTags] = useState<string[]>([]);
   const [draftTranscript, setDraftTranscript] = useState<string | null>(null);
+  const [heat, setHeat] = useState<Span[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [denoise, setDenoise] = useState("");
@@ -131,8 +185,23 @@ export function ViewerScreen({
     setEditing(false);
     setError(null);
     setExported(null);
+    setHeat([]);
     api.item(hit.item_id).then(setItem).catch((e) => setError((e as Error).message));
   }, [hit.item_id]);
+
+  // Теплова підсвітка — окремий запит: це робота моделі, і потрібна вона
+  // лише тоді, коли запис відкрили саме з пошуку.
+  useEffect(() => {
+    if (!query) return;
+    let dropped = false;
+    api
+      .itemHeat(hit.item_id, query)
+      .then((r) => !dropped && setHeat(r.spans))
+      .catch(() => undefined);
+    return () => {
+      dropped = true;
+    };
+  }, [hit.item_id, query]);
 
   useEffect(() => {
     api.tags().then(setTags).catch(() => undefined);
@@ -431,7 +500,7 @@ export function ViewerScreen({
           )}
           {item.kind === "text" && (
             <div className="selectable font-serif h-full w-full max-w-[680px] overflow-y-auto p-6 text-[13.5px] leading-[1.75] text-ink">
-              <Highlighted text={item.text_content ?? ""} needle={matched} />
+              <Highlighted text={item.text_content ?? ""} needle={matched} spans={heat} />
             </div>
           )}
         </div>
@@ -560,7 +629,7 @@ export function ViewerScreen({
                 />
               ) : (
                 <p className="selectable mt-1 text-[12px] leading-[1.6] text-ink-dim">
-                  <Highlighted text={item.transcript ?? ""} needle={matched} />
+                  <Highlighted text={item.transcript ?? ""} needle={matched} spans={heat} />
                 </p>
               )}
               <p className="mt-1 text-[11px] text-ink-faint">

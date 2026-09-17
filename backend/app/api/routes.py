@@ -412,6 +412,32 @@ def reveal_file(request: RevealRequest) -> dict:
     return {"revealed": export.reveal(path)}
 
 
+class HeatRequest(BaseModel):
+    query: str = ""
+
+
+@router.post("/items/{item_id}/heat")
+def item_heat(item_id: int, request: HeatRequest) -> dict:
+    """Наскільки кожна ділянка тексту відповідає запиту.
+
+    Окремим запитом, а не разом із записом: це секунда роботи моделі, і
+    потрібна вона лише тоді, коли запис відкрили саме з пошуку.
+    """
+    item = repo.get_item(item_id)
+    if item is None:
+        raise HTTPException(404, "Запис не знайдено")
+
+    text = item["transcript"] or item["text_content"] or ""
+    if not text or not request.query.strip():
+        return {"spans": []}
+
+    from ..ml.registry import get_text_embedder
+    from ..search.heat import word_heat
+
+    spans = word_heat(text, request.query, get_text_embedder())
+    return {"spans": [[start, end, value] for start, end, value in spans]}
+
+
 @router.delete("/items/{item_id}")
 def remove_item(item_id: int) -> dict:
     settings = get_settings()

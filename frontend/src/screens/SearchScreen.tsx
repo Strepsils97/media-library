@@ -102,7 +102,9 @@ function NothingFound({
 
 interface Props {
   libraryEmpty: boolean;
-  onOpen: (hits: SearchHit[], index: number) => void;
+  // Запит їде в переглядач: там він потрібен, щоб підсвітити в тексті саме
+  // те, за що запис потрапив у видачу.
+  onOpen: (hits: SearchHit[], index: number, query: string) => void;
 }
 
 export function SearchScreen({ libraryEmpty, onOpen }: Props) {
@@ -360,7 +362,7 @@ export function SearchScreen({ libraryEmpty, onOpen }: Props) {
                 <ResultCard
                   key={hit.item_id}
                   hit={hit}
-                  onOpen={() => onOpen(result.hits, index)}
+                  onOpen={() => onOpen(result.hits, index, filters.query)}
                 />
               ))}
             </div>

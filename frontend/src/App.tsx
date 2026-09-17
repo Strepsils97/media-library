@@ -16,7 +16,11 @@ export default function App() {
   const [runtime, setRuntime] = useState<RuntimeStatus | null>(null);
   // Перегляд гортає результати, тож йому потрібен увесь список, а не лише
   // обраний запис.
-  const [viewing, setViewing] = useState<{ hits: SearchHit[]; index: number } | null>(
+  const [viewing, setViewing] = useState<{
+    hits: SearchHit[];
+    index: number;
+    query: string;
+  } | null>(
     null,
   );
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -62,6 +66,7 @@ export default function App() {
       <ViewerScreen
         hits={viewing.hits}
         index={viewing.index}
+        query={viewing.query}
         onIndex={(index) => setViewing({ ...viewing, index })}
         onBack={() => setViewing(null)}
         onChanged={refresh}
@@ -78,7 +83,7 @@ export default function App() {
       {screen === "search" && (
         <SearchScreen
           libraryEmpty={stats !== null && stats.item_count === 0}
-          onOpen={(hits, index) => setViewing({ hits, index })}
+          onOpen={(hits, index, query) => setViewing({ hits, index, query })}
         />
       )}
       {screen === "add" && <AddScreen onAdded={refresh} />}

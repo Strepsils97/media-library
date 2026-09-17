@@ -56,6 +56,12 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(payload),
     }),
+  /** Наскільки кожна ділянка тексту відповідає запиту: [початок, кінець, 0..1]. */
+  itemHeat: (id: number, query: string) =>
+    request<{ spans: [number, number, number][] }>(`/items/${id}/heat`, {
+      method: "POST",
+      body: JSON.stringify({ query }),
+    }),
   deleteItem: (id: number) => request<void>(`/items/${id}`, { method: "DELETE" }),
   exportItem: (id: number, denoise: string) =>
     request<{ path: string; name: string; denoised: string }>(
